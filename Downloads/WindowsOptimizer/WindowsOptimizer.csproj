@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\App.ico</ApplicationIcon>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+    <Page Include="MainWindow.xaml" />
+    <Compile Include="App.xaml.cs" />
+    <Compile Include="MainWindow.xaml.cs" />
+    <Compile Include="BenchmarkHelper.cs" />
+    <Compile Include="DiskHelper.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Optimizer.cs" />
+    <Compile Include="PowerShellHelper.cs" />
+    <Compile Include="SafeReclaimScriptBuilder.cs" />
+    <Compile Include="RestoreManager.cs" />
+    <Compile Include="SnapshotManager.cs" />
+    <Compile Include="StorageAdvisor.cs" />
+    <Compile Include="Models\PathEntry.cs" />
+    <Compile Include="Models\StorageCandidate.cs" />
+    <Compile Include="Models\UserFolderEntry.cs" />
+    <Compile Include="Models\AppSnapshot.cs" />
+    <Compile Include="Models\PagefileSettingSnapshot.cs" />
+    <Compile Include="Models\OptimizationDescriptor.cs" />
+    <Compile Include="Models\PagefileOptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\App.ico" />
+    <None Include="Assets\App.png" />
+  </ItemGroup>
+
+</Project>

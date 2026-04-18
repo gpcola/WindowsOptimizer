@@ -61,6 +61,18 @@ namespace WindowsOptimizer
             });
         }
 
+        private string GetSafeReclaimScriptExportDirectory()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsOptimizer", "Scripts");
+        }
+
+        private string EnsureSafeReclaimScriptExported()
+        {
+            string exportDir = GetSafeReclaimScriptExportDirectory();
+            lastExportedScriptPath = SafeReclaimScriptBuilder.Export(exportDir);
+            return lastExportedScriptPath;
+        }
+
         private void RefreshDiskInfo()
         {
             try
@@ -540,10 +552,9 @@ namespace WindowsOptimizer
         {
             try
             {
-                string exportDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsOptimizer", "Scripts");
-                lastExportedScriptPath = SafeReclaimScriptBuilder.Export(exportDir);
-                logger.Log($"Safe reclaim script exported to: {lastExportedScriptPath}");
-                MessageBox.Show($"Safe reclaim script exported to:\n\n{lastExportedScriptPath}", "Script exported", MessageBoxButton.OK, MessageBoxImage.Information);
+                string path = EnsureSafeReclaimScriptExported();
+                logger.Log($"Safe reclaim script exported to: {path}");
+                MessageBox.Show($"Safe reclaim script exported to:\n\n{path}", "Script exported", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -551,20 +562,49 @@ namespace WindowsOptimizer
             }
         }
 
-        private void RunSafeReclaimScript_Click(object sender, RoutedEventArgs e)
+        private async void RunSafeReclaimScript_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(lastExportedScriptPath) || !File.Exists(lastExportedScriptPath))
-                {
-                    string exportDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsOptimizer", "Scripts");
-                    lastExportedScriptPath = SafeReclaimScriptBuilder.Export(exportDir);
-                }
+                var dismPrompt = MessageBox.Show(
+                    "Run DISM component cleanup (/StartComponentCleanup /ResetBase) after safe reclaim?\n\nThis is Microsoft-supported but irreversible.",
+                    "Safe reclaim options",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
 
-                if (PowerShellHelper.RunScriptFileElevated(lastExportedScriptPath!))
-                    logger.Log("Safe reclaim script launched with elevation request.");
-                else
-                    logger.Log("WARNING: Safe reclaim script could not be launched.");
+                bool runDismCleanup = dismPrompt == MessageBoxResult.Yes;
+                var result = await Task.Run(() => SafeReclaimExecutor.Execute(logger.Log, runDismCleanup));
+                logger.Log($"Safe reclaim (compiled mode) delta: {result.DeltaGb} GB");
+                RefreshDiskInfo();
+            }
+            catch (Exception ex)
+            {
+                logger.Log("ERR: " + ex.Message);
+            }
+        }
+
+        private void PreviewSafeReclaimScript_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string path = EnsureSafeReclaimScriptExported();
+                Process.Start(new ProcessStartInfo("notepad.exe", $"\"{path}\"") { UseShellExecute = true });
+                logger.Log($"Opened safe reclaim script preview in Notepad: {path}");
+            }
+            catch (Exception ex)
+            {
+                logger.Log("ERR: " + ex.Message);
+            }
+        }
+
+        private void OpenSafeReclaimScriptFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string exportDir = GetSafeReclaimScriptExportDirectory();
+                Directory.CreateDirectory(exportDir);
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{exportDir}\"") { UseShellExecute = true });
+                logger.Log($"Opened safe reclaim script folder: {exportDir}");
             }
             catch (Exception ex)
             {

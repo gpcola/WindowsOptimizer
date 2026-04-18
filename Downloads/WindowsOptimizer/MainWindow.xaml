@@ -293,7 +293,9 @@ The safe reclaim script export gives you a Microsoft-friendly cleanup path for t
                             </TextBlock>
                             <WrapPanel Margin="0,14,0,0">
                                 <Button Content="Export Safe Reclaim Script" Width="190" Click="ExportSafeReclaimScript_Click"/>
-                                <Button Content="Run Safe Reclaim Script" Width="180" Click="RunSafeReclaimScript_Click"/>
+                                <Button Content="Run Safe Reclaim (Compiled)" Width="220" Click="RunSafeReclaimScript_Click"/>
+                                <Button Content="Preview Script" Width="130" Click="PreviewSafeReclaimScript_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Open Script Folder" Width="150" Click="OpenSafeReclaimScriptFolder_Click" Style="{StaticResource SecondaryButtonStyle}"/>
                             </WrapPanel>
                         </StackPanel>
                     </ScrollViewer>

@@ -1,0 +1,60 @@
+name: windows-build
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  windows-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore WindowsOptimizer.csproj
+
+      - name: Build
+        run: dotnet build WindowsOptimizer.csproj -c Release --no-restore
+
+      - name: Publish self-contained release
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\Build-WindowsOptimizer.ps1 -Publish -SelfContained
+
+      - name: Validate publish executable exists
+        shell: pwsh
+        run: |
+          $exePath = 'publish\win-x64\Release\WindowsOptimizer.exe'
+          if (-not (Test-Path $exePath)) {
+            throw "Missing compiled executable: $exePath"
+          }
+
+      - name: Validate release archive exists
+        shell: pwsh
+        run: |
+          $zipPath = 'artifacts\releases\WindowsOptimizer-win-x64-Release-self-contained.zip'
+          $checksumPath = "$zipPath.sha256"
+          if (-not (Test-Path $zipPath)) {
+            throw "Missing release zip: $zipPath"
+          }
+          if (-not (Test-Path $checksumPath)) {
+            throw "Missing SHA256 file: $checksumPath"
+          }
+
+      - name: Upload Windows publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsOptimizer-win-x64-self-contained
+          path: |
+            artifacts/releases/WindowsOptimizer-win-x64-Release-self-contained.zip
+            artifacts/releases/WindowsOptimizer-win-x64-Release-self-contained.zip.sha256
+          if-no-files-found: error

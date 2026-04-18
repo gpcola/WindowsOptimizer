@@ -23,6 +23,7 @@
     <Compile Include="Logger.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="PowerShellHelper.cs" />
+    <Compile Include="SafeReclaimExecutor.cs" />
     <Compile Include="SafeReclaimScriptBuilder.cs" />
     <Compile Include="RestoreManager.cs" />
     <Compile Include="SnapshotManager.cs" />

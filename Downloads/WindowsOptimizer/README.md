@@ -20,6 +20,7 @@ WindowsOptimizer is a WPF .NET 8 Windows desktop utility focused on practical ho
 - multi-select move, quarantine, and delete handling for storage candidates
 - cancellable background storage scanning
 - safe reclaim PowerShell script export and launch support
+- safe reclaim **compiled mode** execution from the WPF app (script export remains available for auditing/manual use)
 
 ## Build
 
@@ -31,4 +32,10 @@ Open `WindowsOptimizer.csproj` in Visual Studio 2022 or later with .NET desktop 
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Build-WindowsOptimizer.ps1 -Publish -SelfContained
+```
+
+For a release-ready Windows binary:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Build-WindowsOptimizer.ps1 -Publish -Runtime win-x64 -Configuration Release -SelfContained
 ```

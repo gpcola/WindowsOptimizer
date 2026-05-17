@@ -23,22 +23,22 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="Windows Optimizer" Style="{ThemeResource TitleTextBlockStyle}" />
-                        <TextBlock Text="A 1LG Digital utility • info@1lg.com • https://www.1lg.com" Opacity="0.75" />
+                        <TextBlock Text="A 1LG Digital utility - info@1lg.com - https://www.1lg.com" Opacity="0.75" TextWrapping="Wrap" />
                     </StackPanel>
                     <Button Grid.Column="2" Content="1LG Digital" Click="Open1Lg_Click" />
                 </Grid>
             </muxc:NavigationView.Header>
 
             <muxc:NavigationView.MenuItems>
-                <muxc:NavigationViewItem Content="Home" Tag="home" Icon="Home" />
-                <muxc:NavigationViewItem Content="Optimize" Tag="optimize" Icon="Repair" />
-                <muxc:NavigationViewItem Content="Storage" Tag="storage" Icon="Folder" />
-                <muxc:NavigationViewItem Content="WSL Storage" Tag="wsl" Icon="Library" />
-                <muxc:NavigationViewItem Content="Network" Tag="network" Icon="Globe" />
-                <muxc:NavigationViewItem Content="Restore" Tag="restore" Icon="Refresh" />
-                <muxc:NavigationViewItem Content="Benchmark" Tag="benchmark" Icon="SpeedHigh" />
-                <muxc:NavigationViewItem Content="Advisor" Tag="advisor" Icon="Bullets" />
-                <muxc:NavigationViewItem Content="About 1LG" Tag="about" Icon="Contact" />
+                <muxc:NavigationViewItem Content="Home" Tag="home" />
+                <muxc:NavigationViewItem Content="Optimize" Tag="optimize" />
+                <muxc:NavigationViewItem Content="Storage" Tag="storage" />
+                <muxc:NavigationViewItem Content="WSL Storage" Tag="wsl" />
+                <muxc:NavigationViewItem Content="Network" Tag="network" />
+                <muxc:NavigationViewItem Content="Restore" Tag="restore" />
+                <muxc:NavigationViewItem Content="Benchmark" Tag="benchmark" />
+                <muxc:NavigationViewItem Content="Advisor" Tag="advisor" />
+                <muxc:NavigationViewItem Content="About 1LG" Tag="about" />
             </muxc:NavigationView.MenuItems>
 
             <Frame x:Name="ContentFrame" />

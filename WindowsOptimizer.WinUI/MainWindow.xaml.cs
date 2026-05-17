@@ -110,7 +110,7 @@ public sealed partial class MainWindow : Window
         var wslCard = MetricCard("WSL distros", "Scan", "Open WSL Storage", 0);
         var networkCard = MetricCard("Network adapters", NetworkHelper.GetAdapters().Count.ToString(), "Detected locally", 100);
 
-        page.Children.Add(Wrap(diskCard, ramCard, wslCard, networkCard));
+        page.Children.Add(DashboardCards(diskCard, ramCard, wslCard, networkCard));
         page.Children.Add(ComparisonDashboard());
         page.Children.Add(ActionCard("Quick actions", "Run the common safe path first, or jump straight to specialist tools.",
             Button("Capture BEFORE", (_, _) => { beforeSnapshot = benchmark.CaptureMetrics(); Navigate("home"); }),
@@ -481,7 +481,7 @@ public sealed partial class MainWindow : Window
     private static Border Card(UIElement content) => new() { Child = content, Padding = new Thickness(16), CornerRadius = new CornerRadius(14), Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent), BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray), BorderThickness = new Thickness(1), Margin = new Thickness(0, 0, 0, 10) };
     private static StackPanel Stack(params UIElement[] children) { var p = new StackPanel { Spacing = 8 }; foreach (var c in children) p.Children.Add(c); return p; }
     private static StackPanel Inline(params UIElement[] children) { var p = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; foreach (var c in children) p.Children.Add(c); return p; }
-    private static WrapPanel Wrap(params UIElement[] children) { var p = new WrapPanel { Orientation = Orientation.Horizontal }; foreach (var c in children) { if (c is FrameworkElement fe) fe.Width = 260; p.Children.Add(c); } return p; }
+    private static StackPanel DashboardCards(params UIElement[] children) { var p = new StackPanel { Spacing = 10 }; foreach (var c in children) p.Children.Add(c); return p; }
     private static CheckBox Check(string text, bool isChecked) => new() { Content = text, IsChecked = isChecked };
     private static TextBox TextInput(string placeholder, string text) => new() { PlaceholderText = placeholder, Text = text, MinWidth = 180 };
     private static TextBox MultilineBox(string text, double height) => new() { Text = text, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, Height = height, IsReadOnly = false };

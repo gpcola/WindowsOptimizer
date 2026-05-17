@@ -1,15 +1,20 @@
 <Window x:Class="WindowsOptimizer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Windows 11 Optimizer"
-        Height="820"
-        Width="1220"
-        MinWidth="1080"
-        MinHeight="720"
+        Title="Windows Optimizer by 1LG Digital"
+        Icon="Assets/App.ico"
+        Loaded="MainWindow_Loaded"
+        Height="760"
+        Width="980"
+        MinWidth="460"
+        MinHeight="560"
         Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
         Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}">
     <Window.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#2563EB"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#B91C1C"/>
+        <SolidColorBrush x:Key="BrandRedBrush" Color="#DC3545"/>
+
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
         </Style>
@@ -18,11 +23,11 @@
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
             <Setter Property="Padding" Value="8"/>
+            <Setter Property="MinHeight" Value="32"/>
         </Style>
         <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
-            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Padding" Value="6"/>
         </Style>
         <Style TargetType="CheckBox">
             <Setter Property="Margin" Value="0,0,0,10"/>
@@ -30,7 +35,8 @@
         </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="MinHeight" Value="34"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
@@ -41,138 +47,197 @@
             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
         </Style>
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="14"/>
             <Setter Property="Margin" Value="0,0,0,12"/>
         </Style>
+        <Style TargetType="Expander">
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="RowHeight" Value="34"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+        </Style>
     </Window.Resources>
-    <Grid Margin="16">
+
+    <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="170"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+
         <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="Windows 11 Optimizer" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                    <TextBlock Text="System-aware cleanup, storage review, guided relocation, and automatic post-run metrics."/>
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Margin="12,0,0,0">
+                    <Button Content="Refresh Disk Info" Width="150" Click="RefreshDisk_Click"/>
+                    <TextBlock x:Name="txtSpaceInfo" HorizontalAlignment="Right" FontWeight="SemiBold" TextWrapping="Wrap"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                    <Button Content="Refresh Disk Info" Width="150" Click="RefreshDisk_Click" Margin="0,0,0,8"/>
-                    <TextBlock x:Name="txtSpaceInfo" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                <StackPanel Orientation="Horizontal">
+                    <Viewbox Width="84" Height="64" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Canvas Width="120" Height="91.2">
+                            <Path Fill="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" Data="M278-817q1.5-.3 3.5-.3 3.2 0 4.8 1.3 1.9 1.3 2 4.4a6 6 0 0 1-2 4.7q-1.8 1.5-5.4 1.5-2 0-3-.2zm2.6 9.5h1c2.3 0 3.9-1.3 3.9-4q-.1-3.7-3.7-3.7h-1.2zm12-8.8q0 1.2-1.3 1.3-1.4-.1-1.4-1.3 0-1.3 1.4-1.4c1.4 0 1.4.6 1.4 1.4m-2.6 10.8v-8.5h2.6v8.5zm12.8-8.5v7.2q0 2.6-1.4 3.9-1.5 1-3.4 1t-3-.7l.5-2a5 5 0 0 0 2.4.7q2 0 2.2-2.2v-.6q-.8 1-2.3 1.1c-2 0-3.6-1.7-3.6-4.1 0-2.7 1.8-4.5 3.9-4.5q1.7 0 2.3 1.2l.1-1zm-2.7 3.5v-.5q-.3-1.1-1.5-1.2-1.6 0-1.7 2.4 0 2.1 1.7 2.3 1-.1 1.4-1.1v-1.9m7.4-5.8q0 1.2-1.4 1.3-1.3-.1-1.3-1.3 0-1.3 1.3-1.4c1.3 0 1.4.6 1.4 1.4m-2.7 10.8v-8.5h2.7v8.5zm7.7-11v2.5h1.9v2h-1.9v3q0 1.5 1 1.5h.8v2l-1.7.1q-1.2 0-2-.7-.6-.7-.7-2.5v-3.4h-1v-2h1v-1.8zm8.2 11-.1-.9a3 3 0 0 1-2.5 1c-1.7 0-2.7-1.2-2.7-2.5 0-2.2 2-3.3 5-3.3 0-.5-.3-1.2-1.6-1.2q-1.5 0-2.3.7l-.5-1.7a7 7 0 0 1 3.3-.8c2.8 0 3.7 1.7 3.7 3.7v3l.1 2zm-.3-4q-2.2-.1-2.4 1.3 0 1 1 1t1.4-1v-1.4m4.7-8.3h2.6v12.3H325zM269.7-873h24.2v47.6h-16v-35.5h-8.2zm32 47.6V-873h16v35.2H339v12.4zm72.7-13v-12h13.9v20q-4.1 3-9.8 4.5a34 34 0 0 1-11 1.6q-7.5 0-13.6-3.2c-6.1-3.2-7.2-5-9.5-8.8s-3.4-8-3.4-12.9q0-7.1 3.4-12.9c3.4-5.8 5.5-6.7 9.6-8.8s8.7-3.2 13.9-3.2q7 0 12.5 2.4c5.5 2.4 6.8 3.8 9.3 6.8l-10.3 9q-4.5-5.1-10.7-5.2-5.2 0-8.4 3.2c-3.2 3.2-3.1 5-3.1 8.7q0 5.4 3 8.6c3 3.2 4.9 3.3 8.3 3.3q3 0 5.9-1.1">
+                                <Path.RenderTransform><TranslateTransform X="-269.7" Y="893.1"/></Path.RenderTransform>
+                            </Path>
+                            <Path Fill="{StaticResource BrandRedBrush}" Data="M269.7-893h47.9v12h-48z">
+                                <Path.RenderTransform><TranslateTransform X="-269.7" Y="893.1"/></Path.RenderTransform>
+                            </Path>
+                        </Canvas>
+                    </Viewbox>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Windows Optimizer" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                        <TextBlock Text="by 1LG Digital" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrandRedBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Review storage pressure, run safe cleanup tasks, and use guided recovery-aware actions." TextWrapping="Wrap"/>
+                    </StackPanel>
                 </StackPanel>
-            </Grid>
+            </DockPanel>
         </Border>
+
         <TabControl Grid.Row="1">
-            <TabItem Header="Optimizations">
-                <Grid Margin="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="390"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <TabItem Header="Optimize">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="12">
+                        <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="Select optimizations" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                                <CheckBox x:Name="chkCreateSnapshot" Content="Create snapshot backup before running" ToolTip="Best-effort configuration snapshot only, not a full image backup."/>
-                                <CheckBox x:Name="chkIndexing" Content="Disable indexing" ToolTip="Can reduce background disk activity but slows some search experiences."/>
-                                <CheckBox x:Name="chkFeatures" Content="Remove optional features" ToolTip="Disables selected optional Windows components. Some features may require re-enabling later."/>
-                                <CheckBox x:Name="chkBloat" Content="Remove bloat apps" ToolTip="Attempts to remove selected AppX apps. Some system-protected apps are skipped."/>
-                                <CheckBox x:Name="chkWinSxS" Content="Clean WinSxS" ToolTip="Runs component store cleanup. A reboot may still be required before savings are clear."/>
-                                <CheckBox x:Name="chkUpdates" Content="Clear update cache" ToolTip="Clears SoftwareDistribution download content so updates may redownload later."/>
-                                <CheckBox x:Name="chkHibernate" Content="Disable hibernation" ToolTip="Removes hiberfil.sys and disables hibernate-related behaviour."/>
-                                <CheckBox x:Name="chkTemp" Content="Clean temp files" ToolTip="Clears user and Windows temp locations where possible."/>
-                                <CheckBox x:Name="chkRestore" Content="Delete restore points" ToolTip="Aggressive cleanup. Removes Windows restore rollback points."/>
-                                <CheckBox x:Name="chkPagefile" Content="Move pagefile" Checked="chkPagefile_Checked" Unchecked="chkPagefile_Unchecked" ToolTip="Uses CIM-based configuration. Reboot usually required."/>
-                                <Border x:Name="PagefileOptionsPanel" Style="{StaticResource CardBorderStyle}" Visibility="Collapsed">
-                                    <StackPanel>
-                                        <TextBlock Text="Pagefile options" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                        <TextBlock Text="Target drive:"/>
-                                        <ComboBox x:Name="cmbPagefileDrive" Margin="0,4,0,8"/>
-                                        <TextBlock Text="Initial size (MB):"/>
-                                        <TextBox x:Name="txtPagefileInitial" Text="2048" Margin="0,4,0,8"/>
-                                        <TextBlock Text="Maximum size (MB):"/>
-                                        <TextBox x:Name="txtPagefileMaximum" Text="4096" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                                <CheckBox x:Name="chkServices" Content="Disable services" ToolTip="Disables a shortlist of non-essential services when present and permitted."/>
-                                <CheckBox x:Name="chkBackground" Content="Disable background apps" ToolTip="Changes background app policy/registry settings to reduce background activity."/>
-                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <TextBlock Text="Choose what to run" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Text="Start with the safe cleanup group. Expand advanced sections only when you need them." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                <WrapPanel>
                                     <Button x:Name="btnRunSelected" Content="Run Selected" Width="130" Click="RunSelected_Click"/>
-                                    <Button x:Name="btnRunAll" Content="Run All" Width="110" Click="RunAll_Click"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Border>
-                    <StackPanel Grid.Column="2">
-                        <Border Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Run guidance" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                <TextBlock Text="• The app captures pre-run and post-run metrics automatically, so you do not need manual snapshots just to see the effect of a run." TextWrapping="Wrap" Margin="0,0,0,6"/>
-                                <TextBlock Text="• Reboot-dependent actions may not show their full effect until after restart." TextWrapping="Wrap" Margin="0,0,0,6"/>
-                                <TextBlock Text="• Storage-management tabs below are designed to help move user content and reduce C: pressure without blindly moving protected software." TextWrapping="Wrap"/>
+                                    <Button x:Name="btnRunAll" Content="Run All" Width="110" Click="RunAll_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="Automatic run summary" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                <TextBox x:Name="txtBenchmarkComparison" Height="220" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                                <Expander Header="Recommended cleanup" IsExpanded="True">
+                                    <StackPanel Margin="0,10,0,0">
+                                        <CheckBox x:Name="chkCreateSnapshot" Content="Create snapshot backup before running" ToolTip="Best-effort configuration snapshot only, not a full image backup."/>
+                                        <CheckBox x:Name="chkTemp" Content="Clean temp files" ToolTip="Clears user and Windows temp locations where possible."/>
+                                        <CheckBox x:Name="chkUpdates" Content="Clear update cache" ToolTip="Clears SoftwareDistribution download content so updates may redownload later."/>
+                                        <CheckBox x:Name="chkWinSxS" Content="Clean WinSxS" ToolTip="Runs component store cleanup. A reboot may still be required before savings are clear."/>
+                                    </StackPanel>
+                                </Expander>
+                                <Expander Header="Performance and background activity">
+                                    <StackPanel Margin="0,10,0,0">
+                                        <CheckBox x:Name="chkIndexing" Content="Disable indexing" ToolTip="Can reduce background disk activity but slows some search experiences."/>
+                                        <CheckBox x:Name="chkServices" Content="Disable services" ToolTip="Disables a shortlist of non-essential services when present and permitted."/>
+                                        <CheckBox x:Name="chkBackground" Content="Disable background apps" ToolTip="Changes background app policy/registry settings to reduce background activity."/>
+                                    </StackPanel>
+                                </Expander>
+                                <Expander Header="Advanced and higher-risk actions">
+                                    <StackPanel Margin="0,10,0,0">
+                                        <CheckBox x:Name="chkFeatures" Content="Remove optional features" ToolTip="Disables selected optional Windows components. Some features may require re-enabling later."/>
+                                        <CheckBox x:Name="chkBloat" Content="Remove bloat apps" ToolTip="Attempts to remove selected AppX apps. Some system-protected apps are skipped."/>
+                                        <CheckBox x:Name="chkHibernate" Content="Disable hibernation" ToolTip="Removes hiberfil.sys and disables hibernate-related behaviour."/>
+                                        <CheckBox x:Name="chkRestore" Content="Delete restore points" ToolTip="Aggressive cleanup. Removes Windows restore rollback points."/>
+                                        <CheckBox x:Name="chkPagefile" Content="Move pagefile" Checked="chkPagefile_Checked" Unchecked="chkPagefile_Unchecked" ToolTip="Uses CIM-based configuration. Reboot usually required."/>
+                                        <Border x:Name="PagefileOptionsPanel" Style="{StaticResource CardBorderStyle}" Visibility="Collapsed">
+                                            <StackPanel>
+                                                <TextBlock Text="Pagefile options" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                                <TextBlock Text="Target drive:"/>
+                                                <ComboBox x:Name="cmbPagefileDrive" Margin="0,4,0,8"/>
+                                                <TextBlock Text="Initial size (MB):"/>
+                                                <TextBox x:Name="txtPagefileInitial" Text="2048" Margin="0,4,0,8"/>
+                                                <TextBlock Text="Maximum size (MB):"/>
+                                                <TextBox x:Name="txtPagefileMaximum" Text="4096" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+                        <Expander Header="Run guidance">
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <TextBlock Text="The app captures pre-run and post-run metrics automatically. Reboot-dependent actions may not show their full effect until after restart." TextWrapping="Wrap"/>
+                            </Border>
+                        </Expander>
+                        <Expander Header="Automatic run summary">
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <TextBox x:Name="txtBenchmarkComparison" MinHeight="160" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                            </Border>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Restore">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Restore and recovery" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Text="Reverse common system tuning choices or capture a configuration snapshot." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                <WrapPanel>
+                                    <Button Content="Re-enable services and background apps" Width="270" Click="RestoreServices_Click"/>
+                                    <Button Content="Reset pagefile to automatic on C:" Width="250" Click="RestorePagefile_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Re-enable indexing service" Width="220" Click="RestoreIndexing_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Create Snapshot Now" Width="180" Click="CreateSnapshotNow_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Restore Latest Snapshot" Width="190" Click="RestoreSnapshot_Click" Style="{StaticResource DangerButtonStyle}"/>
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                </Grid>
+                </ScrollViewer>
             </TabItem>
-            <TabItem Header="Restore Defaults">
-                <Border Margin="12" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel>
-                        <TextBlock Text="Restore system defaults" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <WrapPanel>
-                            <Button Content="Re-enable services and background apps" Width="270" Margin="0,0,10,10" Click="RestoreServices_Click"/>
-                            <Button Content="Reset pagefile to automatic on C:" Width="250" Margin="0,0,10,10" Click="RestorePagefile_Click"/>
-                            <Button Content="Re-enable indexing service" Width="220" Margin="0,0,10,10" Click="RestoreIndexing_Click"/>
-                            <Button Content="Create Snapshot Now" Width="180" Margin="0,0,10,10" Click="CreateSnapshotNow_Click"/>
-                            <Button Content="Restore Latest Snapshot" Width="190" Margin="0,0,0,10" Click="RestoreSnapshot_Click"/>
-                        </WrapPanel>
+
+            <TabItem Header="Benchmark">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Performance snapshot" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Text="Capture before and after metrics when validating whether a cleanup pass made a measurable difference." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                <WrapPanel>
+                                    <Button Content="Take BEFORE snapshot" Width="170" Click="BenchmarkBefore_Click"/>
+                                    <Button Content="Take AFTER snapshot" Width="170" Click="BenchmarkAfter_Click"/>
+                                    <Button Content="Compare" Width="110" Click="CompareBenchmark_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <Expander Header="Before snapshot details">
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <TextBox x:Name="txtBenchmarkBefore" MinHeight="110" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                            </Border>
+                        </Expander>
+                        <Expander Header="After snapshot details">
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <TextBox x:Name="txtBenchmarkAfter" MinHeight="110" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                            </Border>
+                        </Expander>
                     </StackPanel>
-                </Border>
+                </ScrollViewer>
             </TabItem>
-            <TabItem Header="Performance Benchmark">
-                <Border Margin="12" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel>
-                        <TextBlock Text="Performance snapshot" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <Button Content="Take BEFORE snapshot" Width="170" Margin="0,0,10,0" Click="BenchmarkBefore_Click"/>
-                            <Button Content="Take AFTER snapshot" Width="170" Margin="0,0,10,0" Click="BenchmarkAfter_Click"/>
-                            <Button Content="Compare" Width="110" Click="CompareBenchmark_Click"/>
-                        </StackPanel>
-                        <TextBlock Text="Before snapshot:" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtBenchmarkBefore" Height="110" Margin="0,6,0,12" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
-                        <TextBlock Text="After snapshot:" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtBenchmarkAfter" Height="110" Margin="0,6,0,12" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
-                    </StackPanel>
-                </Border>
-            </TabItem>
+
             <TabItem Header="User Folders">
                 <Grid Margin="12">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Border Style="{StaticResource CardBorderStyle}">
-                        <WrapPanel>
-                            <Button Content="Refresh Folder Analysis" Width="180" Click="RefreshUserFolders_Click"/>
-                            <Button Content="Open Selected Folder" Width="170" Click="OpenSelectedUserFolder_Click"/>
-                            <Button Content="Copy Selected Path" Width="150" Click="CopySelectedUserFolderPath_Click"/>
-                        </WrapPanel>
+                        <StackPanel>
+                            <TextBlock Text="Known user folders" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Review Desktop, Documents, Downloads and other user-controlled folders before moving content manually." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                            <WrapPanel>
+                                <Button Content="Refresh Folder Analysis" Width="180" Click="RefreshUserFolders_Click"/>
+                                <Button Content="Open Selected Folder" Width="170" Click="OpenSelectedUserFolder_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Copy Selected Path" Width="150" Click="CopySelectedUserFolderPath_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                            </WrapPanel>
+                        </StackPanel>
                     </Border>
-                    <DataGrid x:Name="dgUserFolders" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                    <DataGrid x:Name="dgUserFolders" Grid.Row="1">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Folder" Binding="{Binding Name}" Width="130"/>
                             <DataGridTextColumn Header="Current Path" Binding="{Binding CurrentPath}" Width="*"/>
@@ -182,32 +247,46 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="OneDrive Storage">
-                <Border Margin="12" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel>
-                        <TextBlock Text="OneDrive storage guidance" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <TextBlock x:Name="txtOneDriveRoot" Margin="0,0,0,6"/>
-                        <TextBlock x:Name="txtOneDriveStatus" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                        <WrapPanel>
-                            <Button Content="Refresh OneDrive Status" Width="180" Click="RefreshOneDrive_Click"/>
-                            <Button Content="Open OneDrive Folder" Width="160" Click="OpenOneDriveFolder_Click"/>
-                            <Button Content="Open OneDrive App" Width="150" Click="OpenOneDriveApp_Click"/>
-                        </WrapPanel>
-                        <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" Text="Use the OneDrive app's own unlink/relink or backup management workflow to relocate the sync root or change Desktop/Documents/Pictures backup safely."/>
+
+            <TabItem Header="OneDrive">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="OneDrive storage" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock x:Name="txtOneDriveRoot" Margin="0,0,0,6" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="txtOneDriveStatus" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                <WrapPanel>
+                                    <Button Content="Refresh OneDrive Status" Width="180" Click="RefreshOneDrive_Click"/>
+                                    <Button Content="Open OneDrive Folder" Width="160" Click="OpenOneDriveFolder_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Open OneDrive App" Width="150" Click="OpenOneDriveApp_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <Expander Header="Relocation guidance">
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <TextBlock TextWrapping="Wrap" Text="Use the OneDrive app's own unlink/relink or backup management workflow to relocate the sync root or change Desktop/Documents/Pictures backup safely."/>
+                            </Border>
+                        </Expander>
                     </StackPanel>
-                </Border>
+                </ScrollViewer>
             </TabItem>
-            <TabItem Header="Visual Studio Storage">
+
+            <TabItem Header="Visual Studio">
                 <Grid Margin="12">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Border Style="{StaticResource CardBorderStyle}">
-                        <WrapPanel>
-                            <Button Content="Refresh Visual Studio Paths" Width="190" Click="RefreshVsPaths_Click"/>
-                            <Button Content="Open Selected Path" Width="150" Click="OpenSelectedVsPath_Click"/>
-                            <Button Content="Open VS Installer" Width="140" Click="OpenVsInstaller_Click"/>
-                        </WrapPanel>
+                        <StackPanel>
+                            <TextBlock Text="Visual Studio storage" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Review SDKs, installer cache, package cache and other developer storage locations." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                            <WrapPanel>
+                                <Button Content="Refresh Visual Studio Paths" Width="190" Click="RefreshVsPaths_Click"/>
+                                <Button Content="Open Selected Path" Width="150" Click="OpenSelectedVsPath_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Open VS Installer" Width="140" Click="OpenVsInstaller_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                            </WrapPanel>
+                        </StackPanel>
                     </Border>
-                    <DataGrid x:Name="dgVsPaths" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                    <DataGrid x:Name="dgVsPaths" Grid.Row="1">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="180"/>
                             <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*"/>
@@ -217,34 +296,31 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Large Files &amp; Candidates">
+
+            <TabItem Header="Files">
                 <Grid Margin="12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Border Style="{StaticResource CardBorderStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Scan root:" VerticalAlignment="Center"/>
-                            <TextBox x:Name="txtCandidateScanRoot" Grid.Column="1" Margin="8,0,12,0" Text="C:\Users"/>
-                            <Button Grid.Column="2" Content="Scan" Width="100" Click="ScanCandidates_Click"/>
-                        </Grid>
+                        <StackPanel>
+                            <TextBlock Text="Large files and candidates" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Scan user-controlled locations first. Review results before moving or deleting anything." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                            <DockPanel LastChildFill="True">
+                                <Button DockPanel.Dock="Right" Content="Scan" Width="100" Click="ScanCandidates_Click" Margin="8,0,0,8"/>
+                                <TextBox x:Name="txtCandidateScanRoot" Text="C:\Users" ToolTip="Folder to scan, for example C:\Users"/>
+                            </DockPanel>
+                        </StackPanel>
                     </Border>
-                    <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-                        <WrapPanel>
-                            <TextBox x:Name="txtCandidateMoveTarget" Width="360" Margin="0,0,10,0" ToolTip="Existing folder path used as the move destination."/>
-                            <Button Content="Move Selected" Width="130" Click="MoveSelectedCandidate_Click"/>
-                            <Button Content="Delete Selected" Width="130" Click="DeleteSelectedCandidate_Click"/>
-                            <Button Content="Open Selected" Width="120" Click="OpenSelectedCandidate_Click"/>
-                        </WrapPanel>
-                    </Border>
-                    <DataGrid x:Name="dgCandidates" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                    <Expander Grid.Row="1" Header="Selected item actions">
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <WrapPanel>
+                                <TextBox x:Name="txtCandidateMoveTarget" Width="320" Margin="0,0,10,8" ToolTip="Existing folder path used as the move destination."/>
+                                <Button Content="Move Selected" Width="130" Click="MoveSelectedCandidate_Click"/>
+                                <Button Content="Open Selected" Width="120" Click="OpenSelectedCandidate_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Delete Selected" Width="130" Click="DeleteSelectedCandidate_Click" Style="{StaticResource DangerButtonStyle}"/>
+                            </WrapPanel>
+                        </Border>
+                    </Expander>
+                    <DataGrid x:Name="dgCandidates" Grid.Row="2">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Type" Binding="{Binding ItemType}" Width="80"/>
                             <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140"/>
@@ -256,37 +332,49 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Copilot Suggestions">
-                <Border Margin="12" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel>
-                        <TextBlock Text="Copilot Suggestions for optimising C:" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <TextBlock Text="This tab generates AI-style guidance from your local scan data. It can also hand that summary off to Windows Copilot or relevant Settings pages." TextWrapping="Wrap" Margin="0,0,0,12"/>
-                        <WrapPanel Margin="0,0,0,10">
-                            <Button Content="Refresh Suggestions" Width="160" Click="RefreshCopilotSuggestions_Click"/>
-                            <Button Content="Copy Summary" Width="130" Click="CopyCopilotSummary_Click"/>
-                            <Button Content="Open Storage Settings" Width="160" Click="OpenStorageSettings_Click"/>
-                            <Button Content="Open Copilot" Width="120" Click="OpenCopilot_Click"/>
-                        </WrapPanel>
-                        <TextBox x:Name="txtCopilotSummary" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="360" IsReadOnly="True"/>
-                    </StackPanel>
-                </Border>
+
+            <TabItem Header="Advisor">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Storage Advisor" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Generate a readable summary from local scan data, then copy it or open relevant Windows surfaces." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                            <WrapPanel>
+                                <Button Content="Refresh Suggestions" Width="160" Click="RefreshCopilotSuggestions_Click"/>
+                                <Button Content="Copy Summary" Width="130" Click="CopyCopilotSummary_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Open Storage Settings" Width="160" Click="OpenStorageSettings_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Open Copilot" Width="120" Click="OpenCopilot_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                    <TextBox x:Name="txtCopilotSummary" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True"/>
+                </Grid>
             </TabItem>
+
             <TabItem Header="Help">
-                <Border Margin="12" Style="{StaticResource CardBorderStyle}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <TextBlock TextWrapping="Wrap">
-Use the Optimizations tab for system-level cleanup and tuning.&#10;&#10;
-Use User Folders, OneDrive Storage, Visual Studio Storage, and Large Files &amp; Candidates to reduce pressure on C: without manually moving protected program files.&#10;&#10;
-Large Files &amp; Candidates focuses on user content, archives, installers, videos, and bulky folders under user-controlled paths. Items marked Review first should be inspected before moving or deleting.&#10;&#10;
-Delete Selected performs a permanent delete, not recycle-bin recovery. Move Selected requires an existing destination folder.&#10;&#10;
-The Copilot Suggestions tab builds a summary from local metrics and scan data. Some changes, especially pagefile and optional feature changes, may need a reboot before their effect is fully visible.
-                        </TextBlock>
-                    </ScrollViewer>
-                </Border>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Help and safety notes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                <TextBlock TextWrapping="Wrap" Text="Use Optimize for system-level cleanup and tuning. Use User Folders, OneDrive, Visual Studio, Files, Network Optimisation, and WSL Storage to reduce pressure and diagnose common Windows issues without manually moving protected program files. Some changes, especially pagefile and optional feature changes, may need a reboot before their effect is fully visible."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="1LG Digital" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Text="Website: https://www.1lg.com" TextWrapping="Wrap"/>
+                                <TextBlock Text="Email: info@1lg.com" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
-        <GroupBox Grid.Row="2" Header="Activity log" Margin="0,10,0,0">
-            <TextBox x:Name="txtLog" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AcceptsReturn="True" IsReadOnly="True"/>
-        </GroupBox>
+
+        <Expander Grid.Row="2" Header="Activity log" Margin="0,8,0,0" IsExpanded="False">
+            <TextBox x:Name="txtLog" Height="150" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AcceptsReturn="True" IsReadOnly="True"/>
+        </Expander>
     </Grid>
 </Window>

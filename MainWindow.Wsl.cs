@@ -230,7 +230,7 @@ namespace WindowsOptimizer
                 Content = content,
                 Width = width,
                 Margin = new Thickness(0, 0, 8, 8),
-                Padding = new Thickness(12, 8)
+                Padding = new Thickness(12, 8, 12, 8)
             };
             button.Click += handler;
             return button;

@@ -5,16 +5,15 @@
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>WindowsOptimizer.WinUI</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationManifest>..\app.manifest</ApplicationManifest>
     <Platforms>x64;arm64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>Assets\App.ico</ApplicationIcon>
+    <ApplicationIcon>..\Assets\App.ico</ApplicationIcon>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>true</SelfContained>
   </PropertyGroup>
 
@@ -23,13 +22,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\App.ico" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Assets\App.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Assets\App.ico" Link="Assets\App.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Assets\App.png" Link="Assets\App.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\BenchmarkHelper.cs" Link="Core\BenchmarkHelper.cs" />
     <Compile Include="..\DiskHelper.cs" Link="Core\DiskHelper.cs" />
+    <Compile Include="..\Logger.cs" Link="Core\Logger.cs" />
     <Compile Include="..\Optimizer.cs" Link="Core\Optimizer.cs" />
     <Compile Include="..\PowerShellHelper.cs" Link="Core\PowerShellHelper.cs" />
     <Compile Include="..\RestoreManager.cs" Link="Core\RestoreManager.cs" />

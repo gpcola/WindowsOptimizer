@@ -8,8 +8,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <muxc:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
-            <Color x:Key="BrandRedColor">#DC3545</Color>
-            <SolidColorBrush x:Key="BrandRedBrush" Color="{StaticResource BrandRedColor}" />
+            <SolidColorBrush x:Key="BrandRedBrush" Color="#DC3545" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

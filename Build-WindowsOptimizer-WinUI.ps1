@@ -20,51 +20,83 @@ function Write-Info([string]$Message) { Write-Host "[INFO] $Message" -Foreground
 function Write-Ok([string]$Message) { Write-Host "[OK]   $Message" -ForegroundColor Green }
 function Fail([string]$Message) { Write-Host "[FAIL] $Message" -ForegroundColor Red; exit 1 }
 
-function Test-WinUiBuildToolchain {
+function Get-VsInstallPath {
+    $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path $VsWhere) {
+        $Path = & $VsWhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath 2>$null
+        if (-not [string]::IsNullOrWhiteSpace($Path)) { return $Path }
+
+        $Path = & $VsWhere -latest -products * -property installationPath 2>$null
+        if (-not [string]::IsNullOrWhiteSpace($Path)) { return $Path }
+    }
+
+    $Fallback = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools'
+    if (Test-Path $Fallback) { return $Fallback }
+
+    return $null
+}
+
+function Get-MsBuildPath([string]$VsInstallPath) {
+    $Candidates = @(
+        (Join-Path $VsInstallPath 'MSBuild\Current\Bin\MSBuild.exe'),
+        (Join-Path $VsInstallPath 'MSBuild\Current\Bin\amd64\MSBuild.exe')
+    )
+
+    foreach ($Candidate in $Candidates) {
+        if (Test-Path $Candidate) { return $Candidate }
+    }
+
+    return $null
+}
+
+function Get-PlatformFromRuntime([string]$Rid) {
+    if ($Rid -eq 'win-arm64') { return 'arm64' }
+    return 'x64'
+}
+
+function Test-WinUiBuildToolchain([string]$VsInstallPath, [string]$MsBuildPath) {
     if ($SkipWinUiToolchainCheck) {
         Write-Info 'Skipping WinUI build-toolchain preflight.'
         return
     }
 
-    $SdkRoot = Join-Path $env:ProgramFiles 'dotnet\sdk'
-    $Sdk = Get-ChildItem -Path $SdkRoot -Directory -ErrorAction SilentlyContinue |
-        Where-Object { Test-Path (Join-Path $_.FullName 'Microsoft\VisualStudio\v17.0\AppxPackage\Microsoft.Build.Packaging.Pri.Tasks.dll') } |
-        Sort-Object Name -Descending |
+    if ([string]::IsNullOrWhiteSpace($VsInstallPath) -or -not (Test-Path $VsInstallPath)) {
+        Fail 'Visual Studio 2022 Build Tools or Visual Studio 2022 is required to build this WinUI 3 project.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($MsBuildPath) -or -not (Test-Path $MsBuildPath)) {
+        Fail "MSBuild.exe was not found in the Visual Studio installation: $VsInstallPath"
+    }
+
+    Write-Info "Visual Studio installation detected at: $VsInstallPath"
+    Write-Info "Using MSBuild: $MsBuildPath"
+
+    $VsPriTask = Join-Path $VsInstallPath 'MSBuild\Microsoft\VisualStudio\v17.0\AppxPackage\Microsoft.Build.Packaging.Pri.Tasks.dll'
+    $DotNetPriTask = Get-ChildItem -Path (Join-Path $env:ProgramFiles 'dotnet\sdk') -Directory -ErrorAction SilentlyContinue |
+        ForEach-Object { Join-Path $_.FullName 'Microsoft\VisualStudio\v17.0\AppxPackage\Microsoft.Build.Packaging.Pri.Tasks.dll' } |
+        Where-Object { Test-Path $_ } |
         Select-Object -First 1
 
-    if ($Sdk) {
-        Write-Ok "WinUI PRI/Appx build tasks found in .NET SDK $($Sdk.Name)."
+    if ((Test-Path $VsPriTask) -or $DotNetPriTask) {
+        Write-Ok 'WinUI PRI/Appx build tasks found.'
         return
     }
 
-    $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-    $VsInstall = $null
-    if (Test-Path $VsWhere) {
-        $VsInstall = & $VsWhere -latest -products * -property installationPath 2>$null
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($VsInstall)) {
-        Write-Info "Visual Studio installation detected at: $VsInstall"
-    }
-
     $SetupExe = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\setup.exe'
-    $DetectedInstallPath = if (-not [string]::IsNullOrWhiteSpace($VsInstall)) { $VsInstall } else { 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools' }
-    $ModifyCommand = '"{0}" modify --installPath "{1}" --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Component.Windows10SDK.19041 --includeRecommended --passive --norestart' -f $SetupExe, $DetectedInstallPath
+    $ModifyCommand = '"{0}" modify --installPath "{1}" --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Component.Windows10SDK.19041 --includeRecommended --passive --norestart' -f $SetupExe, $VsInstallPath
 
     Fail @"
 WinUI 3 build toolchain is incomplete.
 
-The Windows App SDK build is looking for Microsoft.Build.Packaging.Pri.Tasks.dll, which is normally supplied by the Visual Studio Build Tools WinUI/UWP application build workload. The plain .NET SDK alone is not enough for this WinUI 3 project.
+The Windows App SDK build needs Microsoft.Build.Packaging.Pri.Tasks.dll. Your Visual Studio/Build Tools installation exists, but the WinUI/UWP packaging workload is still missing.
 
-A Visual Studio Build Tools instance was detected, so do not keep trying to install Visual Studio Community. Modify the existing Build Tools instance instead.
-
-Run PowerShell as Administrator, close Visual Studio/Build Tools/VS Installer if open, then run this command:
+Run PowerShell as Administrator, close Visual Studio/Build Tools/VS Installer if open, then run:
 
 $ModifyCommand
 
 Alternatively open Visual Studio Installer > Build Tools 2022 > Modify and add:
 - .NET desktop build tools
-- WinUI application development build tools
+- Universal Windows Platform build tools / Windows app packaging tools
 - Windows 10 SDK 10.0.19041.0 or later
 
 After installation, close and reopen PowerShell, then rerun:
@@ -72,11 +104,15 @@ After installation, close and reopen PowerShell, then rerun:
 "@
 }
 
-function Invoke-DotNet {
-    param([Parameter(Mandatory = $true)][string[]]$Arguments)
-    Write-Info ("dotnet " + ($Arguments -join ' '))
-    & dotnet @Arguments
-    if ($LASTEXITCODE -ne 0) { Fail "dotnet command failed with exit code $LASTEXITCODE" }
+function Invoke-MSBuild {
+    param(
+        [Parameter(Mandatory = $true)][string]$MsBuildPath,
+        [Parameter(Mandatory = $true)][string[]]$Arguments
+    )
+
+    Write-Info ("MSBuild " + ($Arguments -join ' '))
+    & $MsBuildPath @Arguments
+    if ($LASTEXITCODE -ne 0) { Fail "MSBuild failed with exit code $LASTEXITCODE" }
 }
 
 try {
@@ -88,17 +124,33 @@ try {
     if (-not (Test-Path $ProjectPath)) { Fail "Project file not found: $ProjectPath" }
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) { Fail 'dotnet is not available on PATH. Install the .NET 8 SDK and retry.' }
 
+    $VsInstallPath = Get-VsInstallPath
+    $MsBuildPath = if ($VsInstallPath) { Get-MsBuildPath $VsInstallPath } else { $null }
+    $Platform = Get-PlatformFromRuntime $Runtime
+
     Write-Info "Repository root: $RepoRoot"
     Write-Info "Project: $ProjectPath"
     Write-Info "Configuration: $Configuration"
     Write-Info "Runtime: $Runtime"
+    Write-Info "Platform: $Platform"
 
-    Test-WinUiBuildToolchain
+    Test-WinUiBuildToolchain -VsInstallPath $VsInstallPath -MsBuildPath $MsBuildPath
 
-    if ($Clean) { Invoke-DotNet -Arguments @('clean', $ProjectPath, '-c', $Configuration) }
+    $CommonProps = @(
+        "/p:Configuration=$Configuration",
+        "/p:Platform=$Platform",
+        "/p:RuntimeIdentifier=$Runtime",
+        '/p:WindowsPackageType=None',
+        '/p:WindowsAppSDKSelfContained=true',
+        '/m'
+    )
 
-    Invoke-DotNet -Arguments @('restore', $ProjectPath)
-    Invoke-DotNet -Arguments @('build', $ProjectPath, '-c', $Configuration, '-r', $Runtime, '--no-restore')
+    if ($Clean) {
+        Invoke-MSBuild -MsBuildPath $MsBuildPath -Arguments @($ProjectPath, '/t:Clean') + $CommonProps
+    }
+
+    Invoke-MSBuild -MsBuildPath $MsBuildPath -Arguments @($ProjectPath, '/t:Restore') + $CommonProps
+    Invoke-MSBuild -MsBuildPath $MsBuildPath -Arguments @($ProjectPath, '/t:Build') + $CommonProps
 
     if ($Publish -or $BuildInstaller -or $Zip) {
         $PublishDir = Join-Path $RepoRoot ("publish\winui\$Runtime\$Configuration")
@@ -106,16 +158,14 @@ try {
             Write-Info "Removing existing publish directory: $PublishDir"
             Remove-Item -Path $PublishDir -Recurse -Force
         }
+        New-Item -ItemType Directory -Path $PublishDir -Force | Out-Null
 
-        Invoke-DotNet -Arguments @(
-            'publish',
+        Invoke-MSBuild -MsBuildPath $MsBuildPath -Arguments @(
             $ProjectPath,
-            '-c', $Configuration,
-            '-r', $Runtime,
-            '--self-contained', 'true',
-            '-o', $PublishDir,
-            '--no-build'
-        )
+            '/t:Publish',
+            "/p:PublishDir=$PublishDir\",
+            '/p:SelfContained=true'
+        ) + $CommonProps
 
         $ExePath = Join-Path $PublishDir 'WindowsOptimizer.WinUI.exe'
         if (-not (Test-Path $ExePath)) { Fail "Publish output validation failed: missing executable at $ExePath" }

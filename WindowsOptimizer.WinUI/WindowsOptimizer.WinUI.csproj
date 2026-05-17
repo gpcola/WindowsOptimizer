@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>WindowsOptimizer.WinUI</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64;arm64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets\App.ico</ApplicationIcon>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\App.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\App.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\BenchmarkHelper.cs" Link="Core\BenchmarkHelper.cs" />
+    <Compile Include="..\DiskHelper.cs" Link="Core\DiskHelper.cs" />
+    <Compile Include="..\Optimizer.cs" Link="Core\Optimizer.cs" />
+    <Compile Include="..\PowerShellHelper.cs" Link="Core\PowerShellHelper.cs" />
+    <Compile Include="..\RestoreManager.cs" Link="Core\RestoreManager.cs" />
+    <Compile Include="..\SnapshotManager.cs" Link="Core\SnapshotManager.cs" />
+    <Compile Include="..\StorageAdvisor.cs" Link="Core\StorageAdvisor.cs" />
+    <Compile Include="..\WslHelper.cs" Link="Core\WslHelper.cs" />
+    <Compile Include="..\Models\AppSnapshot.cs" Link="Models\AppSnapshot.cs" />
+    <Compile Include="..\Models\OptimizationDescriptor.cs" Link="Models\OptimizationDescriptor.cs" />
+    <Compile Include="..\Models\PagefileOptions.cs" Link="Models\PagefileOptions.cs" />
+    <Compile Include="..\Models\PagefileSettingSnapshot.cs" Link="Models\PagefileSettingSnapshot.cs" />
+    <Compile Include="..\Models\PathEntry.cs" Link="Models\PathEntry.cs" />
+    <Compile Include="..\Models\StorageCandidate.cs" Link="Models\StorageCandidate.cs" />
+    <Compile Include="..\Models\UserFolderEntry.cs" Link="Models\UserFolderEntry.cs" />
+    <Compile Include="..\Models\WslDistroEntry.cs" Link="Models\WslDistroEntry.cs" />
+  </ItemGroup>
+
+</Project>

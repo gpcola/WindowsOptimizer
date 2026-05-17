@@ -9,7 +9,8 @@ param(
     [switch]$Clean,
     [switch]$Publish,
     [switch]$Zip,
-    [switch]$BuildInstaller
+    [switch]$BuildInstaller,
+    [switch]$SkipWinUiToolchainCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -18,6 +19,53 @@ Set-StrictMode -Version Latest
 function Write-Info([string]$Message) { Write-Host "[INFO] $Message" -ForegroundColor Cyan }
 function Write-Ok([string]$Message) { Write-Host "[OK]   $Message" -ForegroundColor Green }
 function Fail([string]$Message) { Write-Host "[FAIL] $Message" -ForegroundColor Red; exit 1 }
+
+function Test-WinUiBuildToolchain {
+    if ($SkipWinUiToolchainCheck) {
+        Write-Info 'Skipping WinUI build-toolchain preflight.'
+        return
+    }
+
+    $SdkRoot = Join-Path $env:ProgramFiles 'dotnet\sdk'
+    $Sdk = Get-ChildItem -Path $SdkRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { Test-Path (Join-Path $_.FullName 'Microsoft\VisualStudio\v17.0\AppxPackage\Microsoft.Build.Packaging.Pri.Tasks.dll') } |
+        Sort-Object Name -Descending |
+        Select-Object -First 1
+
+    if ($Sdk) {
+        Write-Ok "WinUI PRI/Appx build tasks found in .NET SDK $($Sdk.Name)."
+        return
+    }
+
+    $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    $VsInstall = $null
+    if (Test-Path $VsWhere) {
+        $VsInstall = & $VsWhere -latest -products * -requires Microsoft.VisualStudio.Component.Windows10SDK.19041 -property installationPath 2>$null
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($VsInstall)) {
+        Write-Info "Visual Studio installation detected at: $VsInstall"
+    }
+
+    Fail @'
+WinUI 3 build toolchain is incomplete.
+
+The Windows App SDK build is looking for Microsoft.Build.Packaging.Pri.Tasks.dll, which is normally supplied by the Visual Studio / Build Tools Windows app packaging workload. The plain .NET SDK alone is not enough for this WinUI 3 project.
+
+Install Visual Studio 2022 Community or Build Tools 2022 with these workloads/components:
+- .NET desktop development
+- Universal Windows Platform development or Windows application packaging tools
+- Windows 10/11 SDK, version 10.0.19041.0 or later
+
+Suggested winget route:
+winget install --id Microsoft.VisualStudio.2022.Community -e
+
+Then open Visual Studio Installer > Modify and tick the workloads above, or install Build Tools with equivalent components.
+
+After installation, close and reopen PowerShell, then rerun:
+.\Build-WindowsOptimizer-WinUI.ps1 -Clean -Publish -Zip
+'@
+}
 
 function Invoke-DotNet {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
@@ -39,6 +87,8 @@ try {
     Write-Info "Project: $ProjectPath"
     Write-Info "Configuration: $Configuration"
     Write-Info "Runtime: $Runtime"
+
+    Test-WinUiBuildToolchain
 
     if ($Clean) { Invoke-DotNet -Arguments @('clean', $ProjectPath, '-c', $Configuration) }
 

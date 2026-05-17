@@ -30,6 +30,7 @@
     <Compile Include="..\BenchmarkHelper.cs" Link="Core\BenchmarkHelper.cs" />
     <Compile Include="..\DiskHelper.cs" Link="Core\DiskHelper.cs" />
     <Compile Include="..\Logger.cs" Link="Core\Logger.cs" />
+    <Compile Include="..\NetworkHelper.cs" Link="Core\NetworkHelper.cs" />
     <Compile Include="..\Optimizer.cs" Link="Core\Optimizer.cs" />
     <Compile Include="..\PowerShellHelper.cs" Link="Core\PowerShellHelper.cs" />
     <Compile Include="..\RestoreManager.cs" Link="Core\RestoreManager.cs" />

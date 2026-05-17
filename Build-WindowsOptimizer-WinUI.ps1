@@ -40,31 +40,36 @@ function Test-WinUiBuildToolchain {
     $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
     $VsInstall = $null
     if (Test-Path $VsWhere) {
-        $VsInstall = & $VsWhere -latest -products * -requires Microsoft.VisualStudio.Component.Windows10SDK.19041 -property installationPath 2>$null
+        $VsInstall = & $VsWhere -latest -products * -property installationPath 2>$null
     }
 
     if (-not [string]::IsNullOrWhiteSpace($VsInstall)) {
         Write-Info "Visual Studio installation detected at: $VsInstall"
     }
 
-    Fail @'
+    $SetupExe = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\setup.exe'
+    $DetectedInstallPath = if (-not [string]::IsNullOrWhiteSpace($VsInstall)) { $VsInstall } else { 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools' }
+    $ModifyCommand = '"{0}" modify --installPath "{1}" --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Component.Windows10SDK.19041 --includeRecommended --passive --norestart' -f $SetupExe, $DetectedInstallPath
+
+    Fail @"
 WinUI 3 build toolchain is incomplete.
 
-The Windows App SDK build is looking for Microsoft.Build.Packaging.Pri.Tasks.dll, which is normally supplied by the Visual Studio / Build Tools Windows app packaging workload. The plain .NET SDK alone is not enough for this WinUI 3 project.
+The Windows App SDK build is looking for Microsoft.Build.Packaging.Pri.Tasks.dll, which is normally supplied by the Visual Studio Build Tools WinUI/UWP application build workload. The plain .NET SDK alone is not enough for this WinUI 3 project.
 
-Install Visual Studio 2022 Community or Build Tools 2022 with these workloads/components:
-- .NET desktop development
-- Universal Windows Platform development or Windows application packaging tools
-- Windows 10/11 SDK, version 10.0.19041.0 or later
+A Visual Studio Build Tools instance was detected, so do not keep trying to install Visual Studio Community. Modify the existing Build Tools instance instead.
 
-Suggested winget route:
-winget install --id Microsoft.VisualStudio.2022.Community -e
+Run PowerShell as Administrator, close Visual Studio/Build Tools/VS Installer if open, then run this command:
 
-Then open Visual Studio Installer > Modify and tick the workloads above, or install Build Tools with equivalent components.
+$ModifyCommand
+
+Alternatively open Visual Studio Installer > Build Tools 2022 > Modify and add:
+- .NET desktop build tools
+- WinUI application development build tools
+- Windows 10 SDK 10.0.19041.0 or later
 
 After installation, close and reopen PowerShell, then rerun:
 .\Build-WindowsOptimizer-WinUI.ps1 -Clean -Publish -Zip
-'@
+"@
 }
 
 function Invoke-DotNet {

@@ -10,22 +10,20 @@ Windows Optimizer opens in **Simple** mode by default.
 
 ### Simple
 
-One-click safe housekeeping:
+Simple mode provides three clear actions:
 
-- clean stale, unlocked top-level temporary files
-- empty the Windows Recycle Bin
-- clear the Windows Update download cache only when Windows servicing is idle
+- **Clean up this PC** — stale unlocked temporary files, Recycle Bin and the Windows Update download cache when Windows servicing is idle
+- **Optimize Ethernet & Wi-Fi** — applies conservative Windows high-throughput settings to physical Ethernet/Wi-Fi adapters only
+- **Make this PC a LAN media streamer** — configures built-in Windows media sharing for a trusted private LAN
 
 Simple mode does **not** uninstall applications, disable services or indexing, alter the pagefile, delete restore points, disable hibernation, change background-app policies, or remove Windows features.
-
-It also includes a separate **Make this PC a LAN media streamer** button.
 
 ### Advanced
 
 Advanced mode contains only Windows maintenance/performance areas:
 
 - **Housekeeping** — safe cleanup plus an explicitly confirmed optional consumer-app removal action
-- **Performance** — Windows-native system-drive optimisation, Startup Apps/Storage Settings shortcuts, and LAN media streaming controls
+- **Performance** — Windows-native system-drive optimisation, Ethernet/Wi-Fi optimisation, Private Internet Access guidance, Startup Apps/Storage Settings shortcuts, and LAN media streaming controls
 - **Benchmark** — before/after disk and memory snapshots
 
 WSL, Visual Studio, OneDrive, user-folder relocation, large-file candidate management and similar non-performance modules are not compiled into the shipped application.
@@ -42,6 +40,39 @@ The Windows build workflow fails if shipped application source contains commands
 - DISM `/Disable-Feature`
 
 LAN media streaming is **add-only**. If required Microsoft media components are missing, Windows Optimizer asks before enabling/adding them. Turning streaming off disables sharing but leaves the Windows media components installed.
+
+## Ethernet and Wi-Fi optimisation
+
+The network optimiser is intentionally conservative and VPN-aware. It:
+
+- targets only physical Ethernet/Wi-Fi adapters
+- restores Windows TCP receive-window auto-tuning to `Normal`
+- enables Windows global Receive Side Scaling (RSS)
+- enables per-adapter RSS where the physical adapter supports it
+- disables selective suspend and device sleep-on-disconnect where supported
+- uses `-NoRestart` for adapter settings so Windows Optimizer does not deliberately interrupt the active link
+- reports the detected physical adapter/link speeds
+
+It deliberately does **not** change:
+
+- DNS servers
+- MTU
+- routes
+- network bindings
+- Windows Firewall rules
+- PIA/WinTUN/TAP/WireGuard/OpenVPN virtual adapters
+- checksum, LSO or RSC offloads
+- vendor-specific advanced NIC properties such as Energy Efficient Ethernet or Wi-Fi Preferred Band
+
+These exclusions are intentional because such settings are hardware-, driver- or VPN-specific and blanket changes can reduce throughput or break connectivity.
+
+### Private Internet Access (PIA)
+
+If PIA is installed in its normal Windows location, Windows Optimizer detects it and keeps PIA-controlled network settings untouched.
+
+For LAN/media-device access while PIA is connected, enable **Allow LAN Traffic** in PIA **Settings > Network**. Windows Optimizer provides an **Open PIA** button but does not modify PIA's configuration files.
+
+PIA's own VPN DNS, MTU and tunnel-driver choices remain under PIA control.
 
 ## LAN media streaming
 

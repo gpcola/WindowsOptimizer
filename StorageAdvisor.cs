@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -70,23 +71,16 @@ namespace WindowsOptimizer
             if (!Directory.Exists(root))
                 return results;
 
-            string[] excludedStarts =
-            {
-                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)
-            };
-
+            // The profile root itself is a valid scan boundary, but never a move/delete candidate.
             foreach (string dir in SafeEnumerateDirectories(root))
             {
-                if (excludedStarts.Any(x => !string.IsNullOrWhiteSpace(x) && dir.StartsWith(x, StringComparison.OrdinalIgnoreCase)))
+                if (IsProtectedCandidatePath(dir, out _))
                     continue;
 
                 try
                 {
                     var di = new DirectoryInfo(dir);
-                    if ((di.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+                    if ((di.Attributes & (FileAttributes.ReparsePoint | FileAttributes.System | FileAttributes.Hidden)) != 0)
                         continue;
 
                     double sizeGb = GetDirectorySizeGb(dir, 2);
@@ -99,7 +93,7 @@ namespace WindowsOptimizer
                             Category = ClassifyPath(dir),
                             SizeGb = Math.Round(sizeGb, 2),
                             LastModified = di.LastWriteTime,
-                            Safety = GuessSafety(dir, false)
+                            Safety = "Review only"
                         });
                     }
                 }
@@ -108,9 +102,15 @@ namespace WindowsOptimizer
 
             foreach (string file in SafeEnumerateFiles(root))
             {
+                if (IsProtectedCandidatePath(file, out _))
+                    continue;
+
                 try
                 {
                     var fi = new FileInfo(file);
+                    if ((fi.Attributes & (FileAttributes.ReparsePoint | FileAttributes.System | FileAttributes.Hidden)) != 0)
+                        continue;
+
                     if (fi.Length >= 200L * 1024L * 1024L)
                     {
                         results.Add(new StorageCandidate
@@ -159,7 +159,7 @@ namespace WindowsOptimizer
             if (candidates.Any())
             {
                 lines.Add(string.Empty);
-                lines.Add("Large move/delete candidates detected:");
+                lines.Add("Large storage candidates detected:");
                 foreach (var item in candidates)
                     lines.Add($"- {item.ItemType}: {item.Path} ({item.SizeGb} GB, {item.Safety})");
             }
@@ -170,7 +170,8 @@ namespace WindowsOptimizer
             lines.Add("2. Relocate user folders like Documents, Pictures, Videos, or Downloads where appropriate.");
             lines.Add("3. Review OneDrive local storage usage and use the OneDrive workflow for sync-root relocation if needed.");
             lines.Add("4. Use Visual Studio Installer and cache management rather than moving VS files manually.");
-            lines.Add("5. Reboot after system-level optimizations before reassessing actual savings.");
+            lines.Add("5. AppData, browser profiles, OneDrive roots, system paths, hidden/system data, reparse points and common application-state files are protected.");
+            lines.Add("6. Folder candidates are review-only; WindowsOptimizer will not move or delete whole folders.");
 
             return string.Join(Environment.NewLine, lines);
         }
@@ -182,23 +183,35 @@ namespace WindowsOptimizer
                 if (candidate == null || string.IsNullOrWhiteSpace(targetRoot) || !Directory.Exists(targetRoot))
                     return false;
 
-                string name = candidate.ItemType == "Folder"
-                    ? new DirectoryInfo(candidate.Path).Name
-                    : new FileInfo(candidate.Path).Name;
-
-                string destination = Path.Combine(targetRoot, name);
                 if (candidate.ItemType == "Folder")
                 {
-                    if (Directory.Exists(destination))
-                        destination = Path.Combine(targetRoot, name + "-moved-" + DateTime.Now.ToString("yyyyMMddHHmmss"));
-                    Directory.Move(candidate.Path, destination);
+                    log("Folder moves are disabled by the application-safety policy. Open the folder in Explorer and review it manually instead.");
+                    return false;
                 }
-                else
+
+                if (IsProtectedCandidatePath(candidate.Path, out string reason))
                 {
-                    if (File.Exists(destination))
-                        destination = Path.Combine(targetRoot, Path.GetFileNameWithoutExtension(name) + "-moved-" + DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(name));
-                    File.Move(candidate.Path, destination);
+                    log($"Blocked move from protected application/system data: {reason}");
+                    return false;
                 }
+
+                if (IsProtectedCandidatePath(targetRoot, out string targetReason))
+                {
+                    log($"Blocked move into protected application/system data: {targetReason}");
+                    return false;
+                }
+
+                if (!IsCandidateIdle(candidate.Path))
+                {
+                    log("Blocked move because the file is open or inaccessible. Close the application using the file and retry.");
+                    return false;
+                }
+
+                string name = new FileInfo(candidate.Path).Name;
+                string destination = Path.Combine(targetRoot, name);
+                if (File.Exists(destination))
+                    destination = Path.Combine(targetRoot, Path.GetFileNameWithoutExtension(name) + "-moved-" + DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(name));
+                File.Move(candidate.Path, destination);
 
                 log($"Moved candidate to: {destination}");
                 return true;
@@ -218,11 +231,30 @@ namespace WindowsOptimizer
                     return false;
 
                 if (candidate.ItemType == "Folder")
-                    Directory.Delete(candidate.Path, true);
-                else
-                    File.Delete(candidate.Path);
+                {
+                    log("Folder deletion is disabled by the application-safety policy. Folder candidates are review-only.");
+                    return false;
+                }
 
-                log($"Deleted candidate permanently: {candidate.Path}");
+                if (IsProtectedCandidatePath(candidate.Path, out string reason))
+                {
+                    log($"Blocked delete of protected application/system data: {reason}");
+                    return false;
+                }
+
+                if (!IsCandidateIdle(candidate.Path))
+                {
+                    log("Blocked delete because the file is open or inaccessible. Close the application using the file and retry.");
+                    return false;
+                }
+
+                FileSystem.DeleteFile(
+                    candidate.Path,
+                    UIOption.OnlyErrorDialogs,
+                    RecycleOption.SendToRecycleBin,
+                    UICancelOption.DoNothing);
+
+                log($"Moved candidate to Recycle Bin: {candidate.Path}");
                 return true;
             }
             catch (Exception ex)
@@ -293,6 +325,9 @@ namespace WindowsOptimizer
 
             foreach (var top in topDirectories)
             {
+                if (IsProtectedCandidatePath(top, out _))
+                    continue;
+
                 yield return top;
 
                 string[] children;
@@ -306,7 +341,10 @@ namespace WindowsOptimizer
                 }
 
                 foreach (var child in children)
-                    yield return child;
+                {
+                    if (!IsProtectedCandidatePath(child, out _))
+                        yield return child;
+                }
             }
         }
 
@@ -327,6 +365,9 @@ namespace WindowsOptimizer
 
             foreach (var top in topDirectories)
             {
+                if (IsProtectedCandidatePath(top, out _))
+                    continue;
+
                 string[] files;
                 try
                 {
@@ -338,7 +379,10 @@ namespace WindowsOptimizer
                 }
 
                 foreach (var file in files)
-                    yield return file;
+                {
+                    if (!IsProtectedCandidatePath(file, out _))
+                        yield return file;
+                }
             }
         }
 
@@ -388,10 +432,164 @@ namespace WindowsOptimizer
         private static string GuessSafety(string path, bool isFile)
         {
             string lower = path.ToLowerInvariant();
-            if (lower.Contains("onedrive")) return "Review first";
-            if (lower.Contains("downloads") || lower.EndsWith(".iso") || lower.EndsWith(".zip") || lower.EndsWith(".7z") || lower.EndsWith(".msi") || lower.EndsWith(".exe")) return "Safe candidate";
-            if (isFile && (lower.EndsWith(".mp4") || lower.EndsWith(".mov") || lower.EndsWith(".mkv"))) return "Safe candidate";
+            if (lower.Contains("onedrive")) return "Protected";
+            if (lower.Contains("downloads") || lower.EndsWith(".iso") || lower.EndsWith(".zip") || lower.EndsWith(".7z") || lower.EndsWith(".msi") || lower.EndsWith(".exe")) return "Review first";
+            if (isFile && (lower.EndsWith(".mp4") || lower.EndsWith(".mov") || lower.EndsWith(".mkv"))) return "Review first";
             return "Review first";
+        }
+
+        private static bool IsProtectedCandidatePath(string path, out string reason)
+        {
+            reason = string.Empty;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                reason = "empty path";
+                return true;
+            }
+
+            string fullPath;
+            try
+            {
+                fullPath = Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+            catch
+            {
+                reason = "invalid path";
+                return true;
+            }
+
+            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd(Path.DirectorySeparatorChar);
+            if (string.Equals(fullPath, userProfile, StringComparison.OrdinalIgnoreCase))
+            {
+                reason = "user profile root";
+                return true;
+            }
+
+            var protectedRoots = new List<(string Path, string Name)>
+            {
+                (Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Windows"),
+                (Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Program Files"),
+                (Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Program Files (x86)"),
+                (Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ProgramData"),
+                (Path.Combine(userProfile, "AppData"), "AppData"),
+                (Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Local AppData"),
+                (Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Roaming AppData")
+            };
+
+            string? oneDrive = Environment.GetEnvironmentVariable("OneDrive");
+            if (!string.IsNullOrWhiteSpace(oneDrive))
+                protectedRoots.Add((oneDrive, "OneDrive sync root"));
+
+            foreach (var entry in protectedRoots)
+            {
+                if (string.IsNullOrWhiteSpace(entry.Path))
+                    continue;
+
+                string protectedPath;
+                try
+                {
+                    protectedPath = Path.GetFullPath(entry.Path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (IsSameOrChild(fullPath, protectedPath))
+                {
+                    reason = entry.Name;
+                    return true;
+                }
+            }
+
+            if (File.Exists(fullPath))
+            {
+                string fileName = Path.GetFileName(fullPath);
+                string extension = Path.GetExtension(fullPath).ToLowerInvariant();
+                string[] protectedExtensions =
+                {
+                    ".pst", ".ost", ".db", ".sqlite", ".sqlite3", ".edb", ".ldb",
+                    ".vhd", ".vhdx", ".avhdx", ".qcow", ".qcow2", ".dll", ".sys",
+                    ".dat", ".sav", ".save", ".crx"
+                };
+                string[] protectedNames =
+                {
+                    "Local State", "Preferences", "Secure Preferences", "History", "Cookies",
+                    "Web Data", "Login Data", "Bookmarks"
+                };
+
+                if (protectedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase) ||
+                    protectedNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                {
+                    reason = "application-state file";
+                    return true;
+                }
+            }
+
+            try
+            {
+                FileAttributes attributes;
+                if (File.Exists(fullPath)) attributes = File.GetAttributes(fullPath);
+                else if (Directory.Exists(fullPath)) attributes = new DirectoryInfo(fullPath).Attributes;
+                else return false;
+
+                if ((attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    reason = "reparse point";
+                    return true;
+                }
+                if ((attributes & FileAttributes.System) != 0)
+                {
+                    reason = "system data";
+                    return true;
+                }
+                if ((attributes & FileAttributes.Hidden) != 0)
+                {
+                    reason = "hidden data";
+                    return true;
+                }
+            }
+            catch
+            {
+                reason = "inaccessible metadata";
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsSameOrChild(string path, string root)
+        {
+            if (string.Equals(path, root, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            string prefix = root + Path.DirectorySeparatorChar;
+            return path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsCandidateIdle(string path)
+        {
+            try
+            {
+                return File.Exists(path) && CanOpenExclusively(path);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool CanOpenExclusively(string filePath)
+        {
+            try
+            {
+                using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -93,22 +93,22 @@ namespace WindowsOptimizer
 
             panel.Children.Add(new TextBlock
             {
-                Text = "One click clears temporary files, empties the Recycle Bin, clears the Windows Update download cache, and removes supported bloat apps where present.",
+                Text = "One click removes stale, unlocked temporary files, empties the Recycle Bin, clears the Windows Update download cache only when Windows Update is idle, and removes a conservative allowlist of optional apps.",
                 FontSize = 15,
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 520,
+                MaxWidth = 540,
                 Margin = new Thickness(0, 0, 0, 12)
             });
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Indexing, optional Windows features, pagefile settings and existing service configuration are left unchanged.",
+                Text = "Application data and browser profiles (including Microsoft Edge), indexing, optional Windows features, pagefile settings and existing service configuration are left untouched. In-use items are skipped rather than forced.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 520,
+                MaxWidth = 540,
                 Opacity = 0.78,
                 Margin = new Thickness(0, 0, 0, 24)
             });
@@ -128,11 +128,11 @@ namespace WindowsOptimizer
 
             quickCleanStatus = new TextBlock
             {
-                Text = "Ready.",
+                Text = "Ready. Safety checks will skip anything that is active or uncertain.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 520,
+                MaxWidth = 540,
                 FontWeight = FontWeights.SemiBold
             };
             panel.Children.Add(quickCleanStatus);
@@ -170,24 +170,24 @@ namespace WindowsOptimizer
             }
 
             quickCleanButton.IsEnabled = false;
-            quickCleanStatus.Text = "Cleaning...";
+            quickCleanStatus.Text = "Cleaning safely. Active or uncertain items will be skipped...";
 
             var actions = new List<(string Name, Func<bool> Execute)>
             {
-                ("Clean temp files", () => optimizer.CleanTempFiles()),
+                ("Clean stale temp files", () => optimizer.CleanTempFiles()),
                 ("Empty Recycle Bin", EmptyRecycleBin),
-                ("Clear Windows Update cache", ClearWindowsUpdateCachePreservingServices),
-                ("Remove bloat apps", () => optimizer.RemoveBloatApps())
+                ("Clear Windows Update cache", () => optimizer.ClearUpdateCache()),
+                ("Remove optional apps", () => optimizer.RemoveBloatApps())
             };
 
             try
             {
                 await RunWorkflowAsync(actions, "Quick clean", shouldCreateSnapshot: false);
-                quickCleanStatus.Text = "Finished. Quick clean completed; indexing, optional features and service configuration were not changed.";
+                quickCleanStatus.Text = "Finished. Protected application data, browser profiles and active files were not touched. Open Advanced to review the activity log.";
             }
             catch (Exception ex)
             {
-                quickCleanStatus.Text = "Quick clean finished with an error. Open Advanced to review the activity log.";
+                quickCleanStatus.Text = "Quick clean stopped safely after an error. Open Advanced to review the activity log.";
                 logger.Log("ERR: Quick clean: " + ex.Message);
             }
             finally
@@ -231,85 +231,6 @@ catch {
                 else if (line.StartsWith("RECYCLE_BIN_WARNING:", StringComparison.OrdinalIgnoreCase))
                 {
                     logger.Log("WARNING: Recycle Bin could not be completely emptied: " + line.Substring("RECYCLE_BIN_WARNING:".Length).Trim());
-                    success = false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(result.StdErr))
-            {
-                logger.Log("WARNING: " + result.StdErr.Trim());
-                success = false;
-            }
-
-            return success;
-        }
-
-        private bool ClearWindowsUpdateCachePreservingServices()
-        {
-            logger.Log("Clearing Windows Update download cache...");
-
-            var result = PowerShellHelper.Run(@"
-$serviceNames = @('wuauserv', 'bits')
-$wasRunning = @{}
-$cacheCleared = $false
-try {
-    foreach ($serviceName in $serviceNames) {
-        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
-        if ($null -ne $service) {
-            $wasRunning[$serviceName] = ($service.Status -eq 'Running')
-            if ($service.Status -eq 'Running') {
-                Stop-Service -Name $serviceName -Force -ErrorAction Stop
-            }
-        }
-    }
-
-    $downloadPath = Join-Path $env:SystemRoot 'SoftwareDistribution\Download'
-    if (Test-Path -LiteralPath $downloadPath) {
-        Get-ChildItem -LiteralPath $downloadPath -Force -ErrorAction SilentlyContinue |
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    $cacheCleared = $true
-    'UPDATE_CACHE_CLEARED'
-}
-catch {
-    'UPDATE_CACHE_WARNING:' + $_.Exception.Message
-}
-finally {
-    foreach ($serviceName in $serviceNames) {
-        if ($wasRunning.ContainsKey($serviceName) -and $wasRunning[$serviceName]) {
-            try {
-                Start-Service -Name $serviceName -ErrorAction Stop
-                'SERVICE_STATE_RESTORED:' + $serviceName
-            }
-            catch {
-                'SERVICE_RESTORE_WARNING:' + $serviceName + ':' + $_.Exception.Message
-            }
-        }
-    }
-}");
-
-            bool success = result.Success;
-            foreach (string line in SplitQuickOutput(result.StdOut))
-            {
-                if (line.Equals("UPDATE_CACHE_CLEARED", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Log("Windows Update download cache cleared.");
-                    success = true;
-                }
-                else if (line.StartsWith("SERVICE_STATE_RESTORED:", StringComparison.OrdinalIgnoreCase))
-                {
-                    string serviceName = line.Substring("SERVICE_STATE_RESTORED:".Length).Trim();
-                    logger.Log($"Restored running state for service: {serviceName}");
-                }
-                else if (line.StartsWith("UPDATE_CACHE_WARNING:", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Log("WARNING: Windows Update cache cleanup returned a warning: " + line.Substring("UPDATE_CACHE_WARNING:".Length).Trim());
-                    success = false;
-                }
-                else if (line.StartsWith("SERVICE_RESTORE_WARNING:", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Log("WARNING: " + line.Substring("SERVICE_RESTORE_WARNING:".Length).Trim());
                     success = false;
                 }
             }

@@ -90,9 +90,18 @@ namespace WindowsOptimizer
 
         public static async Task CleanCommonCachesAsync(WslDistroEntry distro)
         {
+            if (string.Equals(distro.State, "Running", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"{distro.Name} is currently running. To avoid deleting files used by Linux applications, shut down WSL first and then retry cache cleanup.");
+            }
+
+            // Do not wipe ~/.cache or live temp trees. apt-get clean is package-manager aware;
+            // /tmp and /var/tmp are limited to stale regular files and empty directories.
             string script = "set -e; " +
                             "if command -v apt-get >/dev/null 2>&1; then sudo apt-get clean || true; fi; " +
-                            "rm -rf ~/.cache/* /tmp/* /var/tmp/* 2>/dev/null || true";
+                            "find /tmp /var/tmp -xdev -type f -mtime +30 -delete 2>/dev/null || true; " +
+                            "find /tmp /var/tmp -xdev -depth -type d -empty -mtime +30 -delete 2>/dev/null || true";
             var result = await RunProcessAsync("wsl.exe", $"-d {QuoteArg(distro.Name)} -- bash -lc {QuoteArg(script)}");
 
             if (result.ExitCode != 0)

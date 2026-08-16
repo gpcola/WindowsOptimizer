@@ -27,6 +27,7 @@ jobs:
             'MainWindow.xaml.cs',
             'MainWindow.QuickClean.cs',
             'MainWindow.MediaStreaming.cs',
+            'NetworkOptimizer.cs',
             'Optimizer.cs',
             'PowerShellHelper.cs'
           )

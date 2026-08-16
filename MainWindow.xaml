@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Windows Optimizer by 1LG Digital"
-        Height="820"
+        Height="840"
         Width="1180"
         MinWidth="980"
         MinHeight="700"
@@ -146,6 +146,20 @@
 
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
+                                <TextBlock Text="Ethernet &amp; Wi-Fi optimisation" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Text="Applies supported high-throughput Windows TCP defaults and reduces power-saving latency on physical network adapters. Private Internet Access virtual adapters, VPN DNS, MTU, routes, bindings and tunnel settings are deliberately left untouched." TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                <TextBlock Text="For PIA users: keep MTU on Auto and use PIA's recommended tunnel driver. To reach local media devices while the VPN is connected, enable Allow LAN Traffic in PIA Settings &gt; Network." TextWrapping="Wrap" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="txtNetworkStatus" Text="Checking network status..." TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                <WrapPanel>
+                                    <Button x:Name="btnOptimizeNetwork" Content="Optimize Ethernet &amp; Wi-Fi" Width="190" Click="OptimizeNetwork_Click"/>
+                                    <Button Content="Refresh Network Status" Width="180" Click="RefreshNetwork_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Open PIA" Width="110" Click="OpenPia_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
                                 <TextBlock Text="LAN media streaming" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                 <TextBlock Text="Turn this PC into a Windows media streaming device for trusted devices on your private LAN. If legacy Windows Media components are missing, Windows Optimizer can add them after asking you first. It never removes media features." TextWrapping="Wrap" Margin="0,0,0,10"/>
                                 <TextBlock x:Name="txtMediaStreamingStatus" Text="Checking media streaming status..." TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,12"/>
@@ -159,7 +173,7 @@
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
                                 <TextBlock Text="Performance policy" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <TextBlock Text="Windows Optimizer deliberately avoids registry-cleaner behaviour and broad service disabling. Changes that trade functionality for tiny benchmark gains are not treated as performance improvements." TextWrapping="Wrap"/>
+                                <TextBlock Text="Windows Optimizer deliberately avoids registry-cleaner behaviour, broad service disabling, DNS replacement, MTU guessing and vendor-specific NIC tweaks. Changes that trade stability or VPN compatibility for tiny benchmark gains are not treated as performance improvements." TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

@@ -77,6 +77,10 @@ try {
             Remove-Item -Path $PublishDir -Recurse -Force
         }
 
+        # Runtime-specific restore is required before publishing with -r. A normal
+        # framework restore does not populate project.assets.json for win-x64/win-arm64/win-x86.
+        Invoke-DotNet -Arguments @('restore', $ProjectPath, '-r', $Runtime)
+
         $PublishArgs = @(
             'publish',
             $ProjectPath,
@@ -84,7 +88,7 @@ try {
             '-r', $Runtime,
             '--self-contained', $(if ($SelfContained) { 'true' } else { 'false' }),
             '-o', $PublishDir,
-            '--no-build'
+            '--no-restore'
         )
 
         if ($SingleFile) {

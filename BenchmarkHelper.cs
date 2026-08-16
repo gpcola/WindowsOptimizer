@@ -46,7 +46,7 @@ namespace WindowsOptimizer
         {
             if (string.IsNullOrWhiteSpace(before) || string.IsNullOrWhiteSpace(after))
             {
-                return "Take both BEFORE and AFTER snapshots to compare. Automatic run summaries appear here after a completed run as well.";
+                return "Take both BEFORE and AFTER snapshots to compare. Automatic run summaries appear here after a completed maintenance run as well.";
             }
 
             return
@@ -89,8 +89,8 @@ namespace WindowsOptimizer
                 $"Logical processors: {after.LogicalProcessors}{Environment.NewLine}" +
                 $"CPU note: {after.CpuHint}{Environment.NewLine}{Environment.NewLine}" +
                 (rebootRecommended
-                    ? "Reboot recommended: yes. Some applied changes, such as optional feature removal, pagefile changes, service-state changes, or hibernation changes, may not be fully reflected until after restart."
-                    : "Reboot recommended: no immediate restart signal was detected from the selected actions.");
+                    ? "Reboot recommended: yes. Complete the restart before reassessing performance."
+                    : "Reboot recommended: no for the completed housekeeping/performance actions. Media component installation reports any restart requirement separately.");
         }
 
         private string GetCpuUsageHint()

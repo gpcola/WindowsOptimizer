@@ -18,9 +18,17 @@ namespace WindowsOptimizer
             var result = PowerShellHelper.Run(@"
 $piaPath = Join-Path $env:ProgramFiles 'Private Internet Access\pia-client.exe'
 $piaDetected = Test-Path -LiteralPath $piaPath
+$vpnPattern = 'Private Internet Access|PIA|Wintun|WireGuard|TAP-Windows|OpenVPN'
 
 $profiles = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue)
-$physical = @(Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object { $_.Status -ne 'Disabled' })
+$physical = @(
+    Get-NetAdapter -Physical -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.Status -ne 'Disabled' -and
+        $_.Name -notmatch $vpnPattern -and
+        $_.InterfaceDescription -notmatch $vpnPattern -and
+        ($_.NdisPhysicalMedium -in @(1,9,14) -or $_.NdisMedium -in @(0,16))
+    })
 
 'PIA|' + $(if ($piaDetected) { 'Detected' } else { 'Not detected' })
 
@@ -111,11 +119,12 @@ $adapters = @(
     Where-Object {
         $_.Status -ne 'Disabled' -and
         $_.Name -notmatch $vpnPattern -and
-        $_.InterfaceDescription -notmatch $vpnPattern
+        $_.InterfaceDescription -notmatch $vpnPattern -and
+        ($_.NdisPhysicalMedium -in @(1,9,14) -or $_.NdisMedium -in @(0,16))
     })
 
 if ($adapters.Count -eq 0) {
-    'WARNING|Adapters|No eligible physical adapters found'
+    'WARNING|Adapters|No eligible physical Ethernet/Wi-Fi adapters found'
 }
 
 foreach ($adapter in $adapters) {

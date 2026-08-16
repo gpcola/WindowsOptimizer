@@ -9,8 +9,10 @@ namespace WindowsOptimizer
     {
         private bool quickModeInitialized;
         private Button quickCleanButton = null!;
+        private Button quickNetworkButton = null!;
         private Button quickMediaStreamingButton = null!;
         private TextBlock quickCleanStatus = null!;
+        private TextBlock quickNetworkStatus = null!;
         private TextBlock quickMediaStreamingStatus = null!;
         private TabControl modeTabs = null!;
 
@@ -47,11 +49,12 @@ namespace WindowsOptimizer
             Content = modeTabs;
             Title = "Windows Optimizer by 1LG Digital";
 
-            MinWidth = 690;
-            MinHeight = 560;
-            Width = 800;
-            Height = 650;
+            MinWidth = 700;
+            MinHeight = 650;
+            Width = 820;
+            Height = 760;
             quickModeInitialized = true;
+            RefreshNetworkStatus();
             RefreshMediaStreamingStatus();
         }
 
@@ -59,7 +62,7 @@ namespace WindowsOptimizer
         {
             var root = new Grid
             {
-                Margin = new Thickness(30),
+                Margin = new Thickness(24),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
@@ -70,8 +73,8 @@ namespace WindowsOptimizer
 
             var card = new Border
             {
-                MaxWidth = 650,
-                Padding = new Thickness(30),
+                MaxWidth = 660,
+                Padding = new Thickness(28),
                 CornerRadius = new CornerRadius(14),
                 BorderThickness = new Thickness(1),
                 BorderBrush = SystemColors.ActiveBorderBrush,
@@ -105,32 +108,11 @@ namespace WindowsOptimizer
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Safe one-click housekeeping for Windows.",
+                Text = "Safe housekeeping and performance maintenance for Windows.",
                 FontSize = 16,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 8)
-            });
-
-            panel.Children.Add(new TextBlock
-            {
-                Text = "Cleans stale temporary files, empties the Recycle Bin and clears the Windows Update download cache only when Windows Update is idle.",
-                TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 560,
-                Margin = new Thickness(0, 0, 0, 10)
-            });
-
-            panel.Children.Add(new TextBlock
-            {
-                Text = "It does not uninstall apps, remove Windows features, disable services or indexing, change the pagefile, touch browser profiles, or alter existing Windows capabilities.",
-                TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 560,
-                Opacity = 0.78,
-                Margin = new Thickness(0, 0, 0, 22)
+                Margin = new Thickness(0, 0, 0, 16)
             });
 
             quickCleanButton = new Button
@@ -138,32 +120,56 @@ namespace WindowsOptimizer
                 Content = "Clean up this PC",
                 FontSize = 20,
                 FontWeight = FontWeights.SemiBold,
-                Height = 62,
-                MinWidth = 310,
+                Height = 60,
+                MinWidth = 320,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 12)
+                Margin = new Thickness(0, 0, 0, 8)
             };
             quickCleanButton.Click += QuickClean_Click;
             panel.Children.Add(quickCleanButton);
 
             quickCleanStatus = new TextBlock
             {
-                Text = "Ready. Active or uncertain files will be skipped.",
+                Text = "Cleans only stale temporary files, the Recycle Bin and an idle Windows Update download cache. No apps or Windows features are removed.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 560,
-                FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(0, 0, 0, 22)
+                MaxWidth = 580,
+                Opacity = 0.8,
+                Margin = new Thickness(0, 0, 0, 18)
             };
             panel.Children.Add(quickCleanStatus);
+
+            quickNetworkButton = new Button
+            {
+                Content = "Optimize Ethernet & Wi-Fi",
+                FontSize = 15,
+                Height = 46,
+                MinWidth = 320,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            quickNetworkButton.Click += OptimizeNetwork_Click;
+            panel.Children.Add(quickNetworkButton);
+
+            quickNetworkStatus = new TextBlock
+            {
+                Text = "Uses supported Windows high-throughput settings on physical adapters only. PIA VPN settings are preserved.",
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                MaxWidth = 580,
+                Opacity = 0.8,
+                Margin = new Thickness(0, 0, 0, 18)
+            };
+            panel.Children.Add(quickNetworkStatus);
 
             quickMediaStreamingButton = new Button
             {
                 Content = "Make this PC a LAN media streamer",
                 FontSize = 15,
                 Height = 46,
-                MinWidth = 310,
+                MinWidth = 320,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 8)
             };
@@ -172,11 +178,11 @@ namespace WindowsOptimizer
 
             quickMediaStreamingStatus = new TextBlock
             {
-                Text = "Media streaming is only enabled on a trusted private LAN.",
+                Text = "Media streaming is only enabled on a trusted private LAN. If PIA is connected, Allow LAN Traffic should be enabled in PIA.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 560,
+                MaxWidth = 580,
                 Opacity = 0.8,
                 Margin = new Thickness(0, 0, 0, 18)
             };
@@ -206,14 +212,14 @@ namespace WindowsOptimizer
                 MinWidth = 980;
                 MinHeight = 700;
                 if (Width < 1180) Width = 1180;
-                if (Height < 820) Height = 820;
+                if (Height < 840) Height = 840;
             }
             else
             {
-                MinWidth = 690;
-                MinHeight = 560;
-                if (Width > 900) Width = 800;
-                if (Height > 720) Height = 650;
+                MinWidth = 700;
+                MinHeight = 650;
+                if (Width > 920) Width = 820;
+                if (Height > 800) Height = 760;
             }
         }
 
@@ -251,6 +257,18 @@ namespace WindowsOptimizer
             {
                 quickCleanButton.IsEnabled = true;
             }
+        }
+
+        private void SetQuickNetworkStatus(string text)
+        {
+            if (quickModeInitialized && quickNetworkStatus != null)
+                quickNetworkStatus.Text = text;
+        }
+
+        private void SetQuickNetworkButtonEnabled(bool enabled)
+        {
+            if (quickModeInitialized && quickNetworkButton != null)
+                quickNetworkButton.IsEnabled = enabled;
         }
 
         private void SetQuickMediaStreamingStatus(string text)

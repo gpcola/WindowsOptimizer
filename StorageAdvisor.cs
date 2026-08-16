@@ -93,7 +93,7 @@ namespace WindowsOptimizer
                             Category = ClassifyPath(dir),
                             SizeGb = Math.Round(sizeGb, 2),
                             LastModified = di.LastWriteTime,
-                            Safety = GuessSafety(dir, false)
+                            Safety = "Review only"
                         });
                     }
                 }
@@ -159,7 +159,7 @@ namespace WindowsOptimizer
             if (candidates.Any())
             {
                 lines.Add(string.Empty);
-                lines.Add("Large move/recycle candidates detected:");
+                lines.Add("Large storage candidates detected:");
                 foreach (var item in candidates)
                     lines.Add($"- {item.ItemType}: {item.Path} ({item.SizeGb} GB, {item.Safety})");
             }
@@ -170,7 +170,8 @@ namespace WindowsOptimizer
             lines.Add("2. Relocate user folders like Documents, Pictures, Videos, or Downloads where appropriate.");
             lines.Add("3. Review OneDrive local storage usage and use the OneDrive workflow for sync-root relocation if needed.");
             lines.Add("4. Use Visual Studio Installer and cache management rather than moving VS files manually.");
-            lines.Add("5. AppData, browser profiles, OneDrive roots, system paths, hidden/system data, and reparse points are excluded from move/delete candidates.");
+            lines.Add("5. AppData, browser profiles, OneDrive roots, system paths, hidden/system data, reparse points and common application-state files are protected.");
+            lines.Add("6. Folder candidates are review-only; WindowsOptimizer will not move or delete whole folders.");
 
             return string.Join(Environment.NewLine, lines);
         }
@@ -181,6 +182,12 @@ namespace WindowsOptimizer
             {
                 if (candidate == null || string.IsNullOrWhiteSpace(targetRoot) || !Directory.Exists(targetRoot))
                     return false;
+
+                if (candidate.ItemType == "Folder")
+                {
+                    log("Folder moves are disabled by the application-safety policy. Open the folder in Explorer and review it manually instead.");
+                    return false;
+                }
 
                 if (IsProtectedCandidatePath(candidate.Path, out string reason))
                 {
@@ -196,27 +203,15 @@ namespace WindowsOptimizer
 
                 if (!IsCandidateIdle(candidate.Path))
                 {
-                    log("Blocked move because one or more files are open, inaccessible, or the folder contains a reparse point. Close the application using the data and retry.");
+                    log("Blocked move because the file is open or inaccessible. Close the application using the file and retry.");
                     return false;
                 }
 
-                string name = candidate.ItemType == "Folder"
-                    ? new DirectoryInfo(candidate.Path).Name
-                    : new FileInfo(candidate.Path).Name;
-
+                string name = new FileInfo(candidate.Path).Name;
                 string destination = Path.Combine(targetRoot, name);
-                if (candidate.ItemType == "Folder")
-                {
-                    if (Directory.Exists(destination))
-                        destination = Path.Combine(targetRoot, name + "-moved-" + DateTime.Now.ToString("yyyyMMddHHmmss"));
-                    Directory.Move(candidate.Path, destination);
-                }
-                else
-                {
-                    if (File.Exists(destination))
-                        destination = Path.Combine(targetRoot, Path.GetFileNameWithoutExtension(name) + "-moved-" + DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(name));
-                    File.Move(candidate.Path, destination);
-                }
+                if (File.Exists(destination))
+                    destination = Path.Combine(targetRoot, Path.GetFileNameWithoutExtension(name) + "-moved-" + DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(name));
+                File.Move(candidate.Path, destination);
 
                 log($"Moved candidate to: {destination}");
                 return true;
@@ -235,6 +230,12 @@ namespace WindowsOptimizer
                 if (candidate == null)
                     return false;
 
+                if (candidate.ItemType == "Folder")
+                {
+                    log("Folder deletion is disabled by the application-safety policy. Folder candidates are review-only.");
+                    return false;
+                }
+
                 if (IsProtectedCandidatePath(candidate.Path, out string reason))
                 {
                     log($"Blocked delete of protected application/system data: {reason}");
@@ -243,26 +244,15 @@ namespace WindowsOptimizer
 
                 if (!IsCandidateIdle(candidate.Path))
                 {
-                    log("Blocked delete because one or more files are open, inaccessible, or the folder contains a reparse point. Close the application using the data and retry.");
+                    log("Blocked delete because the file is open or inaccessible. Close the application using the file and retry.");
                     return false;
                 }
 
-                if (candidate.ItemType == "Folder")
-                {
-                    FileSystem.DeleteDirectory(
-                        candidate.Path,
-                        UIOption.OnlyErrorDialogs,
-                        RecycleOption.SendToRecycleBin,
-                        UICancelOption.DoNothing);
-                }
-                else
-                {
-                    FileSystem.DeleteFile(
-                        candidate.Path,
-                        UIOption.OnlyErrorDialogs,
-                        RecycleOption.SendToRecycleBin,
-                        UICancelOption.DoNothing);
-                }
+                FileSystem.DeleteFile(
+                    candidate.Path,
+                    UIOption.OnlyErrorDialogs,
+                    RecycleOption.SendToRecycleBin,
+                    UICancelOption.DoNothing);
 
                 log($"Moved candidate to Recycle Bin: {candidate.Path}");
                 return true;
@@ -512,6 +502,30 @@ namespace WindowsOptimizer
                 }
             }
 
+            if (File.Exists(fullPath))
+            {
+                string fileName = Path.GetFileName(fullPath);
+                string extension = Path.GetExtension(fullPath).ToLowerInvariant();
+                string[] protectedExtensions =
+                {
+                    ".pst", ".ost", ".db", ".sqlite", ".sqlite3", ".edb", ".ldb",
+                    ".vhd", ".vhdx", ".avhdx", ".qcow", ".qcow2", ".dll", ".sys",
+                    ".dat", ".sav", ".save", ".crx"
+                };
+                string[] protectedNames =
+                {
+                    "Local State", "Preferences", "Secure Preferences", "History", "Cookies",
+                    "Web Data", "Login Data", "Bookmarks"
+                };
+
+                if (protectedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase) ||
+                    protectedNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                {
+                    reason = "application-state file";
+                    return true;
+                }
+            }
+
             try
             {
                 FileAttributes attributes;
@@ -557,38 +571,7 @@ namespace WindowsOptimizer
         {
             try
             {
-                if (File.Exists(path))
-                    return CanOpenExclusively(path);
-
-                if (!Directory.Exists(path))
-                    return false;
-
-                var pending = new Stack<string>();
-                pending.Push(path);
-
-                while (pending.Count > 0)
-                {
-                    string current = pending.Pop();
-                    var currentInfo = new DirectoryInfo(current);
-                    if ((currentInfo.Attributes & FileAttributes.ReparsePoint) != 0)
-                        return false;
-
-                    foreach (string file in Directory.EnumerateFiles(current))
-                    {
-                        if (!CanOpenExclusively(file))
-                            return false;
-                    }
-
-                    foreach (string dir in Directory.EnumerateDirectories(current))
-                    {
-                        var di = new DirectoryInfo(dir);
-                        if ((di.Attributes & FileAttributes.ReparsePoint) != 0)
-                            return false;
-                        pending.Push(dir);
-                    }
-                }
-
-                return true;
+                return File.Exists(path) && CanOpenExclusively(path);
             }
             catch
             {

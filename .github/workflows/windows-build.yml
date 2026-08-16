@@ -46,6 +46,28 @@ jobs:
           }
           Write-Host 'Safety invariant passed: no Windows feature-removal commands in shipped application code.'
 
+      - name: Safety gate - preserve VPN and adapter compatibility
+        shell: pwsh
+        run: |
+          $networkForbidden = @(
+            'Set-DnsClientServerAddress',
+            'Set-NetIPInterface',
+            'Set-NetAdapterAdvancedProperty',
+            'Set-NetAdapterBinding',
+            'Restart-NetAdapter',
+            'Disable-NetAdapter',
+            'New-NetFirewallRule',
+            'Remove-NetFirewallRule'
+          )
+          foreach ($pattern in $networkForbidden) {
+            $match = Select-String -Path 'NetworkOptimizer.cs' -Pattern $pattern -SimpleMatch -ErrorAction SilentlyContinue
+            if ($match) {
+              $match | ForEach-Object { Write-Host $_ }
+              throw "Network safety invariant violated: NetworkOptimizer contains '$pattern'."
+            }
+          }
+          Write-Host 'Network safety invariant passed: DNS, MTU/IP interface, bindings, vendor properties, firewall and forced adapter restarts are untouched.'
+
       - name: Ensure Inno Setup 6
         shell: pwsh
         run: |

@@ -46,6 +46,20 @@ jobs:
           }
           Write-Host 'Safety invariant passed: no Windows feature-removal commands in shipped application code.'
 
+      - name: Ensure Inno Setup 6
+        shell: pwsh
+        run: |
+          $paths = @(
+            'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+            'C:\Program Files\Inno Setup 6\ISCC.exe'
+          )
+          if (-not ($paths | Where-Object { Test-Path $_ })) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) {
+              throw "Chocolatey could not install Inno Setup 6 (exit $LASTEXITCODE)."
+            }
+          }
+
       - name: Restore
         run: dotnet restore WindowsOptimizer.csproj
 

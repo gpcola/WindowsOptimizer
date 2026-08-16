@@ -22,8 +22,8 @@ namespace WindowsOptimizer
 
             try
             {
-                SetMediaStreamingStatus("Checking the active network and Windows media components...");
-                logger.Log("Checking prerequisites for LAN media streaming.");
+                SetMediaStreamingStatus("Checking the physical LAN and Windows media components...");
+                logger.Log("Checking prerequisites for LAN media streaming on physical Ethernet/Wi-Fi interfaces only.");
 
                 var networkResult = await Task.Run(GetNetworkProfileStatus);
                 var networkLines = SplitMediaOutput(networkResult.StdOut)
@@ -32,8 +32,8 @@ namespace WindowsOptimizer
 
                 if (!networkResult.Success || networkLines.Count == 0)
                 {
-                    SetMediaStreamingStatus("No active Windows network profile could be verified. Media streaming was not enabled.");
-                    logger.Log("Media streaming skipped because no active network profile could be verified.");
+                    SetMediaStreamingStatus("No active physical Ethernet/Wi-Fi network profile could be verified. Media streaming was not enabled.");
+                    logger.Log("Media streaming skipped because no active physical LAN profile could be verified.");
                     return;
                 }
 
@@ -52,17 +52,18 @@ namespace WindowsOptimizer
 
                     var confirmPrivate = MessageBox.Show(
                         "Windows media streaming should only be enabled on a trusted LAN.\n\n" +
-                        "The following active network profile(s) are currently Public:\n" +
+                        "The following physical Ethernet/Wi-Fi profile(s) are currently Public:\n" +
                         names +
-                        "\n\nChange these profile(s) to Private and continue?",
+                        "\n\nChange these physical LAN profile(s) to Private and continue?\n\n" +
+                        "VPN/tunnel profiles, including Private Internet Access, are never changed by this operation.",
                         "Trusted LAN required",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Warning);
 
                     if (confirmPrivate != MessageBoxResult.Yes)
                     {
-                        SetMediaStreamingStatus("Media streaming was not enabled because the active LAN was not confirmed as trusted/private.");
-                        logger.Log("Media streaming cancelled because the user did not approve changing the active Public network profile.");
+                        SetMediaStreamingStatus("Media streaming was not enabled because the physical LAN was not confirmed as trusted/private.");
+                        logger.Log("Media streaming cancelled because the user did not approve changing the physical Public LAN profile.");
                         return;
                     }
 
@@ -76,14 +77,14 @@ namespace WindowsOptimizer
                         !SplitMediaOutput(privateResult.StdOut)
                             .Any(line => line.Equals("NETWORKS_PRIVATE", StringComparison.OrdinalIgnoreCase)))
                     {
-                        SetMediaStreamingStatus("Windows could not change the active network to Private. Media streaming was not enabled.");
-                        logger.Log("WARNING: Failed to change one or more active network profiles to Private.");
+                        SetMediaStreamingStatus("Windows could not change the physical LAN to Private. Media streaming was not enabled.");
+                        logger.Log("WARNING: Failed to change one or more physical LAN profiles to Private.");
                         if (!string.IsNullOrWhiteSpace(privateResult.StdErr))
                             logger.Log("WARNING: " + privateResult.StdErr.Trim());
                         return;
                     }
 
-                    logger.Log("Approved active LAN profile(s) changed from Public to Private.");
+                    logger.Log("Approved physical LAN profile(s) changed from Public to Private. VPN profiles were untouched.");
                 }
 
                 string? wmpConfigPath = await Task.Run(FindWmpConfigPath);
@@ -149,7 +150,7 @@ namespace WindowsOptimizer
                     }
                 }
 
-                SetMediaStreamingStatus("Enabling Windows media sharing, browsing and its firewall exception...");
+                SetMediaStreamingStatus("Enabling Windows media sharing, browsing and its Windows-managed firewall exception...");
                 var enableResult = await Task.Run(() => RunWmpConfig(wmpConfigPath!, "HMEOn"));
 
                 if (!enableResult.Success ||
@@ -164,8 +165,9 @@ namespace WindowsOptimizer
                 }
 
                 SetMediaStreamingStatus(
-                    "LAN media streaming is enabled for this trusted private network. Windows Media Player libraries can now be shared with compatible devices.");
+                    "LAN media streaming is enabled for the trusted physical private network. If PIA is connected, make sure Allow LAN Traffic is enabled in PIA Settings > Network.");
                 logger.Log("LAN media streaming enabled using Windows Media Player network sharing.");
+                logger.Log("PIA reminder: Allow LAN Traffic must be enabled in PIA for local devices while the VPN is connected.");
             }
             catch (Exception ex)
             {
@@ -197,7 +199,7 @@ namespace WindowsOptimizer
 
             var confirm = MessageBox.Show(
                 "Turn off Windows Media Player network sharing on this PC?\n\n" +
-                "This disables media sharing and its firewall exception but does NOT uninstall Windows Media Player or remove any Windows feature.",
+                "This disables media sharing and its Windows-managed firewall exception but does NOT uninstall Windows Media Player or remove any Windows feature.",
                 "Turn off LAN media streaming",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -251,9 +253,23 @@ else {
     'SERVICE|' + $svc.Status
 }
 
-$profiles = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue)
+$vpnPattern = 'Private Internet Access|PIA|Wintun|WireGuard|TAP-Windows|OpenVPN'
+$physicalIndices = @(
+    Get-NetAdapter -Physical -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.Status -ne 'Disabled' -and
+        $_.Name -notmatch $vpnPattern -and
+        $_.InterfaceDescription -notmatch $vpnPattern -and
+        ($_.NdisPhysicalMedium -in @(1,9,14) -or $_.NdisMedium -in @(0,16))
+    } |
+    Select-Object -ExpandProperty ifIndex)
+
+$profiles = @(
+    Get-NetConnectionProfile -ErrorAction SilentlyContinue |
+    Where-Object { $physicalIndices -contains $_.InterfaceIndex })
+
 if ($profiles.Count -eq 0) {
-    'NETWORK|No active profile'
+    'NETWORK|No active physical Ethernet/Wi-Fi profile'
 }
 else {
     'NETWORK|' + (($profiles | ForEach-Object { $_.Name + ' (' + $_.NetworkCategory + ')' }) -join ', ')
@@ -268,8 +284,8 @@ else {
                     ?.Substring("NETWORK|".Length) ?? "Unknown";
 
                 string status = string.IsNullOrWhiteSpace(path)
-                    ? $"Windows media streaming components are not installed. Network: {network}."
-                    : $"Windows media streaming components are available. Sharing service: {service}. Network: {network}.";
+                    ? $"Windows media streaming components are not installed. Physical LAN: {network}."
+                    : $"Windows media streaming components are available. Sharing service: {service}. Physical LAN: {network}.";
 
                 txtMediaStreamingStatus.Text = status;
                 SetQuickMediaStreamingStatus(status);
@@ -293,10 +309,25 @@ else {
         private static PowerShellResult GetNetworkProfileStatus()
         {
             return PowerShellHelper.Run(@"
-$profiles = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue)
+$vpnPattern = 'Private Internet Access|PIA|Wintun|WireGuard|TAP-Windows|OpenVPN'
+$physicalIndices = @(
+    Get-NetAdapter -Physical -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.Status -ne 'Disabled' -and
+        $_.Name -notmatch $vpnPattern -and
+        $_.InterfaceDescription -notmatch $vpnPattern -and
+        ($_.NdisPhysicalMedium -in @(1,9,14) -or $_.NdisMedium -in @(0,16))
+    } |
+    Select-Object -ExpandProperty ifIndex)
+
+$profiles = @(
+    Get-NetConnectionProfile -ErrorAction SilentlyContinue |
+    Where-Object { $physicalIndices -contains $_.InterfaceIndex })
+
 foreach ($profile in $profiles) {
     'PROFILE|' + $profile.InterfaceIndex + '|' + $profile.NetworkCategory + '|' + $profile.Name
-}");
+}
+");
         }
 
         private static PowerShellResult SetNetworkProfilesPrivate(IEnumerable<int> interfaceIndices)
@@ -308,7 +339,7 @@ foreach ($profile in $profiles) {
                 {
                     Success = false,
                     ExitCode = 1,
-                    StdErr = "No network interface indices were supplied."
+                    StdErr = "No physical LAN interface indices were supplied."
                 };
             }
 

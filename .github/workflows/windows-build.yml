@@ -26,9 +26,9 @@ jobs:
       - name: Build
         run: dotnet build WindowsOptimizer.csproj -c Release --no-restore
 
-      - name: Publish self-contained release
+      - name: Publish self-contained release and installer
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\Build-WindowsOptimizer.ps1 -Publish -SelfContained
+        run: powershell -ExecutionPolicy Bypass -File .\Build-WindowsOptimizer.ps1 -Publish -SelfContained -Installer
 
       - name: Validate publish executable exists
         shell: pwsh
@@ -37,8 +37,11 @@ jobs:
           if (-not (Test-Path $exePath)) {
             throw "Missing compiled executable: $exePath"
           }
+          if ((Get-Item $exePath).Length -le 0) {
+            throw "Compiled executable is empty: $exePath"
+          }
 
-      - name: Validate release archive exists
+      - name: Validate portable release archive
         shell: pwsh
         run: |
           $zipPath = 'artifacts\releases\WindowsOptimizer-win-x64-Release-self-contained.zip'
@@ -50,11 +53,28 @@ jobs:
             throw "Missing SHA256 file: $checksumPath"
           }
 
-      - name: Upload Windows publish artifact
+      - name: Validate installer
+        shell: pwsh
+        run: |
+          $installerPath = 'artifacts\installer\WindowsOptimizer-Setup-win-x64.exe'
+          $checksumPath = "$installerPath.sha256"
+          if (-not (Test-Path $installerPath)) {
+            throw "Missing installer: $installerPath"
+          }
+          if ((Get-Item $installerPath).Length -le 0) {
+            throw "Installer is empty: $installerPath"
+          }
+          if (-not (Test-Path $checksumPath)) {
+            throw "Missing installer SHA256 file: $checksumPath"
+          }
+
+      - name: Upload Windows release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WindowsOptimizer-win-x64-self-contained
+          name: WindowsOptimizer-win-x64-release
           path: |
             artifacts/releases/WindowsOptimizer-win-x64-Release-self-contained.zip
             artifacts/releases/WindowsOptimizer-win-x64-Release-self-contained.zip.sha256
+            artifacts/installer/WindowsOptimizer-Setup-win-x64.exe
+            artifacts/installer/WindowsOptimizer-Setup-win-x64.exe.sha256
           if-no-files-found: error

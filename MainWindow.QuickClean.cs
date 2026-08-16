@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace WindowsOptimizer
 {
@@ -11,7 +9,9 @@ namespace WindowsOptimizer
     {
         private bool quickModeInitialized;
         private Button quickCleanButton = null!;
+        private Button quickMediaStreamingButton = null!;
         private TextBlock quickCleanStatus = null!;
+        private TextBlock quickMediaStreamingStatus = null!;
         private TabControl modeTabs = null!;
 
         public void EnableQuickModeShell()
@@ -19,7 +19,6 @@ namespace WindowsOptimizer
             if (quickModeInitialized || Content is not UIElement advancedContent)
                 return;
 
-            quickModeInitialized = true;
             Content = null;
 
             modeTabs = new TabControl
@@ -30,7 +29,7 @@ namespace WindowsOptimizer
 
             var quickTab = new TabItem
             {
-                Header = "Quick Clean",
+                Header = "Simple",
                 Content = BuildQuickCleanContent(),
                 IsSelected = true
             };
@@ -46,19 +45,21 @@ namespace WindowsOptimizer
             modeTabs.SelectionChanged += ModeTabs_SelectionChanged;
 
             Content = modeTabs;
-            Title = "Windows Optimizer";
+            Title = "Windows Optimizer by 1LG Digital";
 
-            MinWidth = 640;
-            MinHeight = 430;
-            Width = 760;
-            Height = 540;
+            MinWidth = 690;
+            MinHeight = 560;
+            Width = 800;
+            Height = 650;
+            quickModeInitialized = true;
+            RefreshMediaStreamingStatus();
         }
 
         private FrameworkElement BuildQuickCleanContent()
         {
             var root = new Grid
             {
-                Margin = new Thickness(34),
+                Margin = new Thickness(30),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
@@ -69,7 +70,7 @@ namespace WindowsOptimizer
 
             var card = new Border
             {
-                MaxWidth = 620,
+                MaxWidth = 650,
                 Padding = new Thickness(30),
                 CornerRadius = new CornerRadius(14),
                 BorderThickness = new Thickness(1),
@@ -84,7 +85,18 @@ namespace WindowsOptimizer
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Quick Clean",
+                Text = "1LG DIGITAL",
+                FontSize = 13,
+                FontWeight = FontWeights.Bold,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(91, 33, 182)),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Windows Optimizer",
                 FontSize = 28,
                 FontWeight = FontWeights.SemiBold,
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -93,24 +105,32 @@ namespace WindowsOptimizer
 
             panel.Children.Add(new TextBlock
             {
-                Text = "One click removes stale, unlocked temporary files, empties the Recycle Bin, clears the Windows Update download cache only when Windows Update is idle, and removes a conservative allowlist of optional apps.",
-                FontSize = 15,
-                TextWrapping = TextWrapping.Wrap,
+                Text = "Safe one-click housekeeping for Windows.",
+                FontSize = 16,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 540,
-                Margin = new Thickness(0, 0, 0, 12)
+                Margin = new Thickness(0, 0, 0, 8)
             });
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Application data and browser profiles (including Microsoft Edge), indexing, optional Windows features, pagefile settings and existing service configuration are left untouched. In-use items are skipped rather than forced.",
+                Text = "Cleans stale temporary files, empties the Recycle Bin and clears the Windows Update download cache only when Windows Update is idle.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 540,
+                MaxWidth = 560,
+                Margin = new Thickness(0, 0, 0, 10)
+            });
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "It does not uninstall apps, remove Windows features, disable services or indexing, change the pagefile, touch browser profiles, or alter existing Windows capabilities.",
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                MaxWidth = 560,
                 Opacity = 0.78,
-                Margin = new Thickness(0, 0, 0, 24)
+                Margin = new Thickness(0, 0, 0, 22)
             });
 
             quickCleanButton = new Button
@@ -119,23 +139,57 @@ namespace WindowsOptimizer
                 FontSize = 20,
                 FontWeight = FontWeights.SemiBold,
                 Height = 62,
-                MinWidth = 300,
+                MinWidth = 310,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 18)
+                Margin = new Thickness(0, 0, 0, 12)
             };
             quickCleanButton.Click += QuickClean_Click;
             panel.Children.Add(quickCleanButton);
 
             quickCleanStatus = new TextBlock
             {
-                Text = "Ready. Safety checks will skip anything that is active or uncertain.",
+                Text = "Ready. Active or uncertain files will be skipped.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 540,
-                FontWeight = FontWeights.SemiBold
+                MaxWidth = 560,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 0, 0, 22)
             };
             panel.Children.Add(quickCleanStatus);
+
+            quickMediaStreamingButton = new Button
+            {
+                Content = "Make this PC a LAN media streamer",
+                FontSize = 15,
+                Height = 46,
+                MinWidth = 310,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            quickMediaStreamingButton.Click += EnableMediaStreaming_Click;
+            panel.Children.Add(quickMediaStreamingButton);
+
+            quickMediaStreamingStatus = new TextBlock
+            {
+                Text = "Media streaming is only enabled on a trusted private LAN.",
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                MaxWidth = 560,
+                Opacity = 0.8,
+                Margin = new Thickness(0, 0, 0, 18)
+            };
+            panel.Children.Add(quickMediaStreamingStatus);
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "A 1LG Digital utility",
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Opacity = 0.75
+            });
 
             Grid.SetRow(card, 1);
             root.Children.Add(card);
@@ -149,15 +203,17 @@ namespace WindowsOptimizer
 
             if (modeTabs.SelectedIndex == 1)
             {
-                MinWidth = 1080;
-                MinHeight = 720;
-                if (Width < 1220) Width = 1220;
+                MinWidth = 980;
+                MinHeight = 700;
+                if (Width < 1180) Width = 1180;
                 if (Height < 820) Height = 820;
             }
             else
             {
-                MinWidth = 640;
-                MinHeight = 430;
+                MinWidth = 690;
+                MinHeight = 560;
+                if (Width > 900) Width = 800;
+                if (Height > 720) Height = 650;
             }
         }
 
@@ -174,20 +230,21 @@ namespace WindowsOptimizer
 
             var actions = new List<(string Name, Func<bool> Execute)>
             {
-                ("Clean stale temp files", () => optimizer.CleanTempFiles()),
-                ("Empty Recycle Bin", EmptyRecycleBin),
-                ("Clear Windows Update cache", () => optimizer.ClearUpdateCache()),
-                ("Remove optional apps", () => optimizer.RemoveBloatApps())
+                ("Clean stale temp files", optimizer.CleanTempFiles),
+                ("Empty Recycle Bin", optimizer.EmptyRecycleBin),
+                ("Clear Windows Update cache", optimizer.ClearUpdateCache)
             };
 
             try
             {
-                await RunWorkflowAsync(actions, "Quick clean", shouldCreateSnapshot: false);
-                quickCleanStatus.Text = "Finished. Protected application data, browser profiles and active files were not touched. Open Advanced to review the activity log.";
+                await RunWorkflowAsync(actions, "Quick clean");
+                quickCleanStatus.Text =
+                    "Finished. No apps, Windows features, services, indexing settings or application data were changed.";
             }
             catch (Exception ex)
             {
-                quickCleanStatus.Text = "Quick clean stopped safely after an error. Open Advanced to review the activity log.";
+                quickCleanStatus.Text =
+                    "Quick clean stopped safely after an error. Open Advanced to review the activity log.";
                 logger.Log("ERR: Quick clean: " + ex.Message);
             }
             finally
@@ -196,61 +253,16 @@ namespace WindowsOptimizer
             }
         }
 
-        private bool EmptyRecycleBin()
+        private void SetQuickMediaStreamingStatus(string text)
         {
-            logger.Log("Emptying Recycle Bin...");
-
-            var result = PowerShellHelper.Run(@"
-try {
-    Clear-RecycleBin -Force -ErrorAction Stop
-    'RECYCLE_BIN_CLEARED'
-}
-catch {
-    $message = $_.Exception.Message
-    if ($message -match 'empty' -or $message -match 'cannot find' -or $message -match 'does not exist') {
-        'RECYCLE_BIN_ALREADY_EMPTY'
-    }
-    else {
-        'RECYCLE_BIN_WARNING:' + $message
-    }
-}");
-
-            bool success = result.Success;
-            foreach (string line in SplitQuickOutput(result.StdOut))
-            {
-                if (line.Equals("RECYCLE_BIN_CLEARED", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Log("Recycle Bin emptied.");
-                    success = true;
-                }
-                else if (line.Equals("RECYCLE_BIN_ALREADY_EMPTY", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Log("Recycle Bin was already empty.");
-                    success = true;
-                }
-                else if (line.StartsWith("RECYCLE_BIN_WARNING:", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Log("WARNING: Recycle Bin could not be completely emptied: " + line.Substring("RECYCLE_BIN_WARNING:".Length).Trim());
-                    success = false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(result.StdErr))
-            {
-                logger.Log("WARNING: " + result.StdErr.Trim());
-                success = false;
-            }
-
-            return success;
+            if (quickModeInitialized && quickMediaStreamingStatus != null)
+                quickMediaStreamingStatus.Text = text;
         }
 
-        private static string[] SplitQuickOutput(string value)
+        private void SetQuickMediaStreamingButtonEnabled(bool enabled)
         {
-            return (value ?? string.Empty)
-                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(line => line.Trim())
-                .Where(line => line.Length > 0)
-                .ToArray();
+            if (quickModeInitialized && quickMediaStreamingButton != null)
+                quickMediaStreamingButton.IsEnabled = enabled;
         }
     }
 }

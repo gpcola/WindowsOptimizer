@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,6 +11,7 @@ namespace WindowsOptimizer
     public partial class MainWindow : Window
     {
         private readonly Optimizer optimizer;
+        private readonly NetworkOptimizer networkOptimizer;
         private readonly BenchmarkHelper benchmark;
         private readonly Logger logger;
         private bool isBusy;
@@ -20,9 +22,11 @@ namespace WindowsOptimizer
 
             logger = new Logger(LogToUi);
             optimizer = new Optimizer(logger.Log);
+            networkOptimizer = new NetworkOptimizer(logger.Log);
             benchmark = new BenchmarkHelper();
 
             RefreshDiskInfo();
+            RefreshNetworkStatus();
             RefreshMediaStreamingStatus();
             LogToUi("Ready. Safe housekeeping mode is active.");
         }
@@ -48,6 +52,22 @@ namespace WindowsOptimizer
             {
                 txtSpaceInfo.Text = "Disk info unavailable";
                 logger.Log("ERR: " + ex.Message);
+            }
+        }
+
+        private void RefreshNetworkStatus()
+        {
+            try
+            {
+                string status = networkOptimizer.GetStatus();
+                txtNetworkStatus.Text = status;
+                SetQuickNetworkStatus(status);
+            }
+            catch (Exception ex)
+            {
+                txtNetworkStatus.Text = "Network status could not be determined.";
+                SetQuickNetworkStatus(txtNetworkStatus.Text);
+                logger.Log("WARNING: Network status: " + ex.Message);
             }
         }
 
@@ -115,6 +135,85 @@ namespace WindowsOptimizer
             await RunWorkflowAsync(actions, "System drive optimization");
         }
 
+        private async void OptimizeNetwork_Click(object sender, RoutedEventArgs e)
+        {
+            await RunNetworkOptimizationAsync();
+        }
+
+        private async Task RunNetworkOptimizationAsync()
+        {
+            if (isBusy)
+            {
+                logger.Log("Another operation is already running.");
+                SetQuickNetworkStatus("Another operation is already running.");
+                return;
+            }
+
+            isBusy = true;
+            SetBusyState(true);
+            SetQuickNetworkButtonEnabled(false);
+
+            try
+            {
+                txtNetworkStatus.Text = "Optimizing the physical Ethernet/Wi-Fi adapters without altering PIA VPN settings...";
+                SetQuickNetworkStatus(txtNetworkStatus.Text);
+
+                bool success = await Task.Run(networkOptimizer.Optimize);
+                RefreshNetworkStatus();
+
+                if (success)
+                {
+                    logger.Log("Network optimization completed. A reconnect or restart may be needed for every adapter power-management change to become active.");
+                }
+                else
+                {
+                    logger.Log("Network optimization completed with warnings or unsupported adapter settings. Unsupported items were left unchanged.");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtNetworkStatus.Text = "Network optimization stopped safely after an error.";
+                SetQuickNetworkStatus(txtNetworkStatus.Text);
+                logger.Log("ERR: Network optimization: " + ex.Message);
+            }
+            finally
+            {
+                isBusy = false;
+                SetBusyState(false);
+                SetQuickNetworkButtonEnabled(true);
+            }
+        }
+
+        private void RefreshNetwork_Click(object sender, RoutedEventArgs e)
+        {
+            RefreshNetworkStatus();
+            logger.Log("Network status refreshed.");
+        }
+
+        private void OpenPia_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                    "Private Internet Access",
+                    "pia-client.exe");
+
+                if (!File.Exists(path))
+                {
+                    logger.Log("Private Internet Access was not found at its standard install location.");
+                    return;
+                }
+
+                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+                logger.Log("Opened Private Internet Access. For local streaming, verify Settings > Network > Allow LAN Traffic is enabled.");
+            }
+            catch (Exception ex)
+            {
+                logger.Log("ERR: Could not open Private Internet Access: " + ex.Message);
+            }
+        }
+
         private async Task RunWorkflowAsync(
             List<(string Name, Func<bool> Execute)> actions,
             string mode)
@@ -175,6 +274,7 @@ namespace WindowsOptimizer
                 btnRunSelected.IsEnabled = !busy;
                 btnRunSafeHousekeeping.IsEnabled = !busy;
                 btnOptimizeDrive.IsEnabled = !busy;
+                btnOptimizeNetwork.IsEnabled = !busy;
                 btnEnableMediaStreaming.IsEnabled = !busy;
                 btnDisableMediaStreaming.IsEnabled = !busy;
             });

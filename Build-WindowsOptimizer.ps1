@@ -10,7 +10,8 @@ param(
     [switch]$SelfContained,
     [switch]$SingleFile,
     [switch]$Clean,
-    [switch]$Zip
+    [switch]$Zip,
+    [switch]$Installer
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,6 +43,26 @@ function Invoke-DotNet {
     }
 }
 
+function Resolve-InnoCompiler {
+    $command = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+    if ($null -ne $command) {
+        return $command.Source
+    }
+
+    $candidates = @(
+        'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+        'C:\Program Files\Inno Setup 6\ISCC.exe'
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
 try {
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
     $RepoRoot = Resolve-Path (Join-Path $ScriptRoot '.')
@@ -54,6 +75,18 @@ try {
 
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
         Fail 'dotnet is not available on PATH. Install the .NET 8 SDK and retry.'
+    }
+
+    if ($Installer -and -not $Publish) {
+        Fail 'The -Installer option requires -Publish.'
+    }
+
+    if ($Installer -and $Runtime -ne 'win-x64') {
+        Fail 'The installer currently targets win-x64. Use -Runtime win-x64.'
+    }
+
+    if ($Installer -and $Configuration -ne 'Release') {
+        Fail 'The installer currently packages the Release configuration. Use -Configuration Release.'
     }
 
     Write-Info "Repository root: $RepoRoot"
@@ -78,7 +111,7 @@ try {
         }
 
         # Runtime-specific restore is required before publishing with -r. A normal
-        # framework restore does not populate project.assets.json for win-x64/win-arm64/win-x86.
+        # framework restore does not populate project.assets.json for runtime targets.
         Invoke-DotNet -Arguments @('restore', $ProjectPath, '-r', $Runtime)
 
         $PublishArgs = @(
@@ -135,11 +168,62 @@ try {
             Write-Ok "SHA256 file created: $ChecksumPath"
         }
 
+        if ($Installer) {
+            $InstallerScript = Join-Path $RepoRoot 'Installer\WindowsOptimizer.iss'
+            if (-not (Test-Path -LiteralPath $InstallerScript)) {
+                Fail "Installer script not found: $InstallerScript"
+            }
+
+            [xml]$ProjectXml = Get-Content -LiteralPath $ProjectPath -Raw
+            $AppVersion = [string]$ProjectXml.Project.PropertyGroup.Version
+            if ([string]::IsNullOrWhiteSpace($AppVersion)) {
+                Fail 'Unable to read <Version> from WindowsOptimizer.csproj.'
+            }
+
+            $IsccPath = Resolve-InnoCompiler
+            if ([string]::IsNullOrWhiteSpace($IsccPath)) {
+                Fail 'Inno Setup 6 compiler (ISCC.exe) was not found. Install Inno Setup 6 and retry.'
+            }
+
+            $InstallerDir = Join-Path $RepoRoot 'artifacts\installer'
+            if (Test-Path -LiteralPath $InstallerDir) {
+                Remove-Item -LiteralPath $InstallerDir -Recurse -Force
+            }
+            New-Item -ItemType Directory -Path $InstallerDir -Force | Out-Null
+
+            Write-Info "Building Inno Setup installer with: $IsccPath"
+            & $IsccPath "/DAppVersion=$AppVersion" $InstallerScript
+            if ($LASTEXITCODE -ne 0) {
+                Fail "Inno Setup compiler failed with exit code $LASTEXITCODE"
+            }
+
+            $InstallerExe = Join-Path $InstallerDir 'WindowsOptimizer-Setup-win-x64.exe'
+            if (-not (Test-Path -LiteralPath $InstallerExe)) {
+                Fail "Installer validation failed: missing setup executable at $InstallerExe"
+            }
+
+            $InstallerItem = Get-Item -LiteralPath $InstallerExe
+            if ($InstallerItem.Length -le 0) {
+                Fail "Installer validation failed: setup executable has zero bytes at $InstallerExe"
+            }
+
+            $InstallerChecksumPath = "$InstallerExe.sha256"
+            $InstallerHash = Get-FileHash -Algorithm SHA256 -LiteralPath $InstallerExe
+            "{0} *{1}" -f $InstallerHash.Hash, (Split-Path -Leaf $InstallerExe) |
+                Set-Content -Path $InstallerChecksumPath -Encoding ascii
+
+            Write-Ok "Installer created: $InstallerExe"
+            Write-Ok "Installer SHA256 created: $InstallerChecksumPath"
+        }
+
         Write-Host ''
         Write-Host 'Final publish outputs:' -ForegroundColor White
         Write-Host "  Publish folder: $PublishDir" -ForegroundColor Gray
         if ($DoZip) {
-            Write-Host "  Artifact folder: $(Join-Path $RepoRoot 'artifacts\releases')" -ForegroundColor Gray
+            Write-Host "  Portable artifact folder: $(Join-Path $RepoRoot 'artifacts\releases')" -ForegroundColor Gray
+        }
+        if ($Installer) {
+            Write-Host "  Installer artifact folder: $(Join-Path $RepoRoot 'artifacts\installer')" -ForegroundColor Gray
         }
     }
 

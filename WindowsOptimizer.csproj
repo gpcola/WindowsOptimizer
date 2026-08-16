@@ -8,6 +8,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\App.ico</ApplicationIcon>
+    <AssemblyName>WindowsOptimizer</AssemblyName>
+    <Product>Windows Optimizer</Product>
+    <Company>1LG Digital</Company>
+    <Authors>1LG Digital</Authors>
+    <Description>Safe Windows housekeeping and performance maintenance by 1LG Digital.</Description>
+    <Copyright>Copyright © 1LG Digital 2026</Copyright>
+    <Version>1.2.0</Version>
+    <FileVersion>1.2.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -18,30 +27,20 @@
     <Page Include="MainWindow.xaml" />
     <Compile Include="App.xaml.cs" />
     <Compile Include="MainWindow.xaml.cs" />
-    <Compile Include="MainWindow.Wsl.cs" />
     <Compile Include="MainWindow.QuickClean.cs" />
+    <Compile Include="MainWindow.MediaStreaming.cs" />
+    <Compile Include="NetworkOptimizer.cs" />
     <Compile Include="BenchmarkHelper.cs" />
     <Compile Include="DiskHelper.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="PowerShellHelper.cs" />
-    <Compile Include="RestoreManager.cs" />
-    <Compile Include="SnapshotManager.cs" />
-    <Compile Include="StorageAdvisor.cs" />
-    <Compile Include="WslHelper.cs" />
-    <Compile Include="Models\PathEntry.cs" />
-    <Compile Include="Models\StorageCandidate.cs" />
-    <Compile Include="Models\UserFolderEntry.cs" />
-    <Compile Include="Models\AppSnapshot.cs" />
-    <Compile Include="Models\PagefileSettingSnapshot.cs" />
-    <Compile Include="Models\OptimizationDescriptor.cs" />
-    <Compile Include="Models\PagefileOptions.cs" />
-    <Compile Include="Models\WslDistroEntry.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\App.ico" />
     <None Include="Assets\App.png" />
+    <None Include="Installer\WindowsOptimizer.iss" />
   </ItemGroup>
 
 </Project>

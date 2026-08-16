@@ -71,15 +71,10 @@ namespace WindowsOptimizer
             if (!Directory.Exists(root))
                 return results;
 
-            if (IsProtectedCandidatePath(root, protectUserProfileRootOnly: true, out string rootReason))
-            {
-                log($"Protected scan root skipped: {rootReason}");
-                return results;
-            }
-
+            // The profile root itself is a valid scan boundary, but never a move/delete candidate.
             foreach (string dir in SafeEnumerateDirectories(root))
             {
-                if (IsProtectedCandidatePath(dir, protectUserProfileRootOnly: false, out _))
+                if (IsProtectedCandidatePath(dir, out _))
                     continue;
 
                 try
@@ -107,7 +102,7 @@ namespace WindowsOptimizer
 
             foreach (string file in SafeEnumerateFiles(root))
             {
-                if (IsProtectedCandidatePath(file, protectUserProfileRootOnly: false, out _))
+                if (IsProtectedCandidatePath(file, out _))
                     continue;
 
                 try
@@ -187,13 +182,13 @@ namespace WindowsOptimizer
                 if (candidate == null || string.IsNullOrWhiteSpace(targetRoot) || !Directory.Exists(targetRoot))
                     return false;
 
-                if (IsProtectedCandidatePath(candidate.Path, protectUserProfileRootOnly: false, out string reason))
+                if (IsProtectedCandidatePath(candidate.Path, out string reason))
                 {
                     log($"Blocked move from protected application/system data: {reason}");
                     return false;
                 }
 
-                if (IsProtectedCandidatePath(targetRoot, protectUserProfileRootOnly: false, out string targetReason))
+                if (IsProtectedCandidatePath(targetRoot, out string targetReason))
                 {
                     log($"Blocked move into protected application/system data: {targetReason}");
                     return false;
@@ -240,7 +235,7 @@ namespace WindowsOptimizer
                 if (candidate == null)
                     return false;
 
-                if (IsProtectedCandidatePath(candidate.Path, protectUserProfileRootOnly: false, out string reason))
+                if (IsProtectedCandidatePath(candidate.Path, out string reason))
                 {
                     log($"Blocked delete of protected application/system data: {reason}");
                     return false;
@@ -340,7 +335,7 @@ namespace WindowsOptimizer
 
             foreach (var top in topDirectories)
             {
-                if (IsProtectedCandidatePath(top, protectUserProfileRootOnly: false, out _))
+                if (IsProtectedCandidatePath(top, out _))
                     continue;
 
                 yield return top;
@@ -357,7 +352,7 @@ namespace WindowsOptimizer
 
                 foreach (var child in children)
                 {
-                    if (!IsProtectedCandidatePath(child, protectUserProfileRootOnly: false, out _))
+                    if (!IsProtectedCandidatePath(child, out _))
                         yield return child;
                 }
             }
@@ -380,7 +375,7 @@ namespace WindowsOptimizer
 
             foreach (var top in topDirectories)
             {
-                if (IsProtectedCandidatePath(top, protectUserProfileRootOnly: false, out _))
+                if (IsProtectedCandidatePath(top, out _))
                     continue;
 
                 string[] files;
@@ -395,7 +390,7 @@ namespace WindowsOptimizer
 
                 foreach (var file in files)
                 {
-                    if (!IsProtectedCandidatePath(file, protectUserProfileRootOnly: false, out _))
+                    if (!IsProtectedCandidatePath(file, out _))
                         yield return file;
                 }
             }
@@ -453,7 +448,7 @@ namespace WindowsOptimizer
             return "Review first";
         }
 
-        private static bool IsProtectedCandidatePath(string path, bool protectUserProfileRootOnly, out string reason)
+        private static bool IsProtectedCandidatePath(string path, out string reason)
         {
             reason = string.Empty;
             if (string.IsNullOrWhiteSpace(path))
@@ -474,7 +469,7 @@ namespace WindowsOptimizer
             }
 
             string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd(Path.DirectorySeparatorChar);
-            if (protectUserProfileRootOnly && string.Equals(fullPath, userProfile, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(fullPath, userProfile, StringComparison.OrdinalIgnoreCase))
             {
                 reason = "user profile root";
                 return true;

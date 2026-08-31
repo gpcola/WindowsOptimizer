@@ -102,8 +102,7 @@ namespace WindowsOptimizer
                 Text = "1LG DIGITAL",
                 Foreground = Brushes.White,
                 FontSize = 21,
-                FontWeight = FontWeights.Bold,
-                CharacterSpacing = 80
+                FontWeight = FontWeights.Bold
             });
 
             brandStack.Children.Add(new TextBlock

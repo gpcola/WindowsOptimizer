@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace WindowsOptimizer
@@ -6,88 +8,117 @@ namespace WindowsOptimizer
     public sealed class Optimizer
     {
         private readonly Action<string> log;
+        private readonly CleanupSafety cleanupSafety;
 
-        public Optimizer(Action<string> logger)
+        public Optimizer(Action<string> logger, CleanupSafety cleanupSafety)
         {
             log = logger;
+            this.cleanupSafety = cleanupSafety;
         }
 
         public bool CleanTempFiles()
         {
             log("Cleaning only stale, top-level temporary files that are not in use...");
 
-            var result = PowerShellHelper.Run(@"
-$cutoff = (Get-Date).AddDays(-30)
-$allowedExtensions = @('.tmp','.temp','.log','.etl','.dmp','.bak')
-$roots = @($env:TEMP, (Join-Path $env:SystemRoot 'Temp')) |
-    Where-Object { $_ -and (Test-Path -LiteralPath $_) } |
-    Select-Object -Unique
+            DateTime cutoff = DateTime.Now.AddDays(-30);
+            var allowedExtensions = new HashSet<string>(
+                new[] { ".tmp", ".temp", ".log", ".etl", ".dmp", ".bak" },
+                StringComparer.OrdinalIgnoreCase);
 
-$removed = 0
-$skipped = 0
-
-foreach ($root in $roots) {
-    foreach ($file in Get-ChildItem -LiteralPath $root -Force -File -ErrorAction SilentlyContinue) {
-        if ($file.LastWriteTime -ge $cutoff) { continue }
-        if ($allowedExtensions -notcontains $file.Extension.ToLowerInvariant()) { continue }
-
-        $stream = $null
-        try {
-            $stream = [System.IO.File]::Open(
-                $file.FullName,
-                [System.IO.FileMode]::Open,
-                [System.IO.FileAccess]::ReadWrite,
-                [System.IO.FileShare]::None)
-
-            $stream.Dispose()
-            $stream = $null
-
-            Remove-Item -LiteralPath $file.FullName -ErrorAction Stop
-            $removed++
-        }
-        catch {
-            if ($null -ne $stream) {
-                $stream.Dispose()
-            }
-            $skipped++
-        }
-    }
-
-    foreach ($dir in Get-ChildItem -LiteralPath $root -Force -Directory -ErrorAction SilentlyContinue) {
-        if ($dir.LastWriteTime -ge $cutoff) { continue }
-
-        try {
-            if (-not (Get-ChildItem -LiteralPath $dir.FullName -Force -ErrorAction Stop | Select-Object -First 1)) {
-                Remove-Item -LiteralPath $dir.FullName -ErrorAction Stop
-            }
-        }
-        catch { }
-    }
-}
-
-'TEMP_CLEAN_RESULT|' + $removed + '|' + $skipped
-");
-
-            bool success = result.Success;
-
-            foreach (string line in SplitLines(result.StdOut))
+            string[] roots =
             {
-                if (!line.StartsWith("TEMP_CLEAN_RESULT|", StringComparison.OrdinalIgnoreCase))
+                Path.GetTempPath(),
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                    "Temp")
+            };
+
+            int removed = 0;
+            int skipped = 0;
+            bool rootRejected = false;
+
+            foreach (string root in roots.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!cleanupSafety.IsSafeTempRoot(root))
+                {
+                    rootRejected = true;
+                    log($"Safety guard skipped an unexpected or protected temp root: {root}");
                     continue;
+                }
 
-                string[] parts = line.Split('|');
-                string removed = parts.Length > 1 ? parts[1] : "0";
-                string skipped = parts.Length > 2 ? parts[2] : "0";
-                log($"Safe temp cleanup removed {removed} stale file(s); {skipped} in-use/protected file(s) were skipped.");
+                var rootDirectory = new DirectoryInfo(root);
+
+                IEnumerable<FileInfo> files;
+                try
+                {
+                    files = rootDirectory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).ToArray();
+                }
+                catch (Exception ex)
+                {
+                    log($"WARNING: Could not enumerate temp root {root}: {ex.Message}");
+                    skipped++;
+                    continue;
+                }
+
+                foreach (FileInfo file in files)
+                {
+                    if (file.LastWriteTime >= cutoff ||
+                        !allowedExtensions.Contains(file.Extension) ||
+                        cleanupSafety.ShouldSkip(file))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        using (var stream = new FileStream(
+                            file.FullName,
+                            FileMode.Open,
+                            FileAccess.ReadWrite,
+                            FileShare.None))
+                        {
+                        }
+
+                        File.Delete(file.FullName);
+                        removed++;
+                    }
+                    catch
+                    {
+                        skipped++;
+                    }
+                }
+
+                IEnumerable<DirectoryInfo> directories;
+                try
+                {
+                    directories = rootDirectory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).ToArray();
+                }
+                catch
+                {
+                    directories = Array.Empty<DirectoryInfo>();
+                }
+
+                foreach (DirectoryInfo directory in directories)
+                {
+                    if (directory.LastWriteTime >= cutoff || cleanupSafety.ShouldSkip(directory))
+                        continue;
+
+                    try
+                    {
+                        if (!directory.EnumerateFileSystemInfos().Any())
+                            directory.Delete();
+                    }
+                    catch
+                    {
+                        skipped++;
+                    }
+                }
             }
 
-            if (!string.IsNullOrWhiteSpace(result.StdErr))
-            {
-                log("WARNING: " + result.StdErr.Trim());
-                success = false;
-            }
+            log($"Safe temp cleanup removed {removed} stale file(s); {skipped} in-use/protected item(s) were skipped.");
+            log("Browser profiles, Microsoft Store app data, identity stores and custom exclusions were not eligible cleanup targets.");
 
-            return success;
+            return !rootRejected;
         }
 
         public bool EmptyRecycleBin()

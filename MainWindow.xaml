@@ -1,49 +1,83 @@
 <Window x:Class="WindowsOptimizer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Windows Optimizer by 1LG Digital"
-        Height="840"
-        Width="1180"
-        MinWidth="980"
-        MinHeight="700"
+        Title="Windows Optimizer — 1LG Digital"
+        Height="880"
+        Width="1220"
+        MinWidth="1000"
+        MinHeight="720"
+        FontFamily="Segoe UI"
         Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
         Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}">
     <Window.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#2563EB"/>
         <SolidColorBrush x:Key="BrandBrush" Color="#5B21B6"/>
+        <SolidColorBrush x:Key="BrandDarkBrush" Color="#3B0764"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#15803D"/>
+        <LinearGradientBrush x:Key="BrandGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#4C1D95" Offset="0"/>
+            <GradientStop Color="#2563EB" Offset="1"/>
+        </LinearGradientBrush>
+
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
         </Style>
+
         <Style TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
-            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Padding" Value="9"/>
+            <Setter Property="FontSize" Value="13"/>
         </Style>
+
         <Style TargetType="CheckBox">
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
         </Style>
+
         <Style TargetType="Button">
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Padding" Value="15,9"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="MinHeight" Value="38"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
+
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
         </Style>
+
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <Style TargetType="GroupBox">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8"/>
         </Style>
     </Window.Resources>
 
@@ -51,23 +85,57 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="180"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="175"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}">
+        <Border Grid.Row="0"
+                Background="{StaticResource BrandGradient}"
+                CornerRadius="14"
+                Padding="24"
+                Margin="0,0,0,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+
                 <StackPanel>
-                    <TextBlock Text="1LG DIGITAL" Foreground="{StaticResource BrandBrush}" FontSize="13" FontWeight="Bold"/>
-                    <TextBlock Text="Windows Optimizer" FontSize="26" FontWeight="SemiBold" Margin="0,2,0,4"/>
-                    <TextBlock Text="Safe Windows housekeeping and performance maintenance. No installed Windows features are removed."/>
+                    <TextBlock Text="1LG DIGITAL"
+                               Foreground="White"
+                               FontSize="20"
+                               FontWeight="Bold"/>
+                    <TextBlock Text="Windows Optimizer"
+                               Foreground="White"
+                               FontSize="30"
+                               FontWeight="SemiBold"
+                               Margin="0,3,0,4"/>
+                    <TextBlock Text="Safe Windows housekeeping with explicit protection for browser profiles and application data."
+                               Foreground="#E8FFFFFF"
+                               FontSize="14"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                    <Button Content="Refresh Disk Info" Width="150" Click="RefreshDisk_Click" Margin="0,0,0,8"/>
-                    <TextBlock x:Name="txtSpaceInfo" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Border Background="#26FFFFFF"
+                            BorderBrush="#55FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18"
+                            Padding="12,6"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,0,10">
+                        <TextBlock Text="PROTECTED CLEANUP"
+                                   Foreground="White"
+                                   FontSize="11"
+                                   FontWeight="Bold"/>
+                    </Border>
+                    <Button Content="Refresh disk info"
+                            Width="150"
+                            Click="RefreshDisk_Click"
+                            Margin="0,0,0,7"/>
+                    <TextBlock x:Name="txtSpaceInfo"
+                               Foreground="White"
+                               HorizontalAlignment="Right"
+                               FontWeight="SemiBold"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -76,7 +144,7 @@
             <TabItem Header="Housekeeping">
                 <Grid Margin="12">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="410"/>
+                        <ColumnDefinition Width="430"/>
                         <ColumnDefinition Width="16"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
@@ -84,48 +152,137 @@
                     <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Text="Safe housekeeping" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                                <CheckBox x:Name="chkTemp" IsChecked="True"
+                                <TextBlock Text="Safe housekeeping"
+                                           Style="{StaticResource SectionTitleStyle}"/>
+                                <TextBlock Text="Choose the actions to run. All cleanup operations skip protected, in-use and uncertain items."
+                                           TextWrapping="Wrap"
+                                           Opacity="0.78"
+                                           Margin="0,0,0,16"/>
+
+                                <CheckBox x:Name="chkTemp"
+                                          IsChecked="True"
                                           Content="Clean stale temporary files"
-                                          ToolTip="Only top-level temporary/log files older than 30 days are considered. Locked files are skipped."/>
-                                <CheckBox x:Name="chkRecycle" IsChecked="True"
+                                          ToolTip="Only top-level temporary/log files older than 30 days are considered. Browser and app profiles are explicitly protected."/>
+                                <CheckBox x:Name="chkRecycle"
+                                          IsChecked="True"
                                           Content="Empty Recycle Bin"
                                           ToolTip="Permanently removes items already placed in the Windows Recycle Bin."/>
-                                <CheckBox x:Name="chkUpdates" IsChecked="True"
+                                <CheckBox x:Name="chkUpdates"
+                                          IsChecked="True"
                                           Content="Clear Windows Update download cache when idle"
                                           ToolTip="Runs only when servicing and update transfers are idle. Service state is restored."/>
-                                <CheckBox x:Name="chkWinSxS" IsChecked="True"
+                                <CheckBox x:Name="chkWinSxS"
+                                          IsChecked="True"
                                           Content="Clean Windows component store"
                                           ToolTip="Uses DISM StartComponentCleanup without ResetBase, preserving normal servicing rollback behaviour."/>
                                 <CheckBox x:Name="chkBloat"
                                           Content="Remove selected optional consumer apps"
                                           ToolTip="Advanced opt-in only. Uses an exact allowlist and asks for confirmation before uninstalling anything."/>
 
-                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                    <Button x:Name="btnRunSelected" Content="Run Selected" Width="130" Click="RunSelected_Click"/>
-                                    <Button x:Name="btnRunSafeHousekeeping" Content="Run Safe Housekeeping" Width="190" Click="RunSafeHousekeeping_Click"/>
-                                </StackPanel>
+                                <Border Background="#102563EB"
+                                        BorderBrush="#302563EB"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Margin="0,8,0,16">
+                                    <TextBlock Text="Edge and other browser user-data folders are not cleanup targets. Custom exclusions below apply in addition to the built-in protected locations."
+                                               TextWrapping="Wrap"
+                                               FontSize="12"/>
+                                </Border>
+
+                                <WrapPanel>
+                                    <Button x:Name="btnRunSelected"
+                                            Content="Run selected"
+                                            Width="135"
+                                            Click="RunSelected_Click"/>
+                                    <Button x:Name="btnRunSafeHousekeeping"
+                                            Content="Run safe housekeeping"
+                                            Width="195"
+                                            Click="RunSafeHousekeeping_Click"/>
+                                </WrapPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
 
-                    <StackPanel Grid.Column="2">
-                        <Border Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Safety boundaries" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                <TextBlock Text="• Installed Windows optional features are never disabled or removed." TextWrapping="Wrap" Margin="0,0,0,6"/>
-                                <TextBlock Text="• Indexing, Windows services, pagefile settings, hibernation, restore points and background-app policies are not changed." TextWrapping="Wrap" Margin="0,0,0,6"/>
-                                <TextBlock Text="• Application data and browser profiles are never cleanup targets. In-use or uncertain files are skipped." TextWrapping="Wrap" Margin="0,0,0,6"/>
-                                <TextBlock Text="• Safe Housekeeping excludes app removal. Optional consumer app removal is always a separate, confirmed choice." TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Automatic run summary" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                <TextBox x:Name="txtBenchmarkComparison" Height="220" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Protected folders"
+                                               Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBlock Text="These built-in locations are always excluded from cleanup. This includes browser profiles and sensitive Windows application identity data."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.78"
+                                               Margin="0,0,0,10"/>
+                                    <TextBox x:Name="txtBuiltInExclusions"
+                                             Height="145"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             TextWrapping="NoWrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Your additional exclusions"
+                                               Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBlock Text="Add one folder per line. Environment variables such as %LOCALAPPDATA% are supported. These exclusions persist for future runs."
+                                               TextWrapping="Wrap"
+                                               Opacity="0.78"
+                                               Margin="0,0,0,10"/>
+                                    <TextBox x:Name="txtCustomExclusions"
+                                             Height="115"
+                                             AcceptsReturn="True"
+                                             TextWrapping="NoWrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"/>
+                                    <WrapPanel Margin="0,10,0,7">
+                                        <Button x:Name="btnSaveExclusions"
+                                                Content="Save exclusions"
+                                                Width="145"
+                                                Click="SaveExclusions_Click"/>
+                                    </WrapPanel>
+                                    <TextBlock x:Name="txtExclusionStatus"
+                                               TextWrapping="Wrap"
+                                               FontSize="12"
+                                               Opacity="0.76"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Safety boundaries"
+                                               Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBlock Text="• Cleanup does not recurse through arbitrary application folders or browser profiles."
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,7"/>
+                                    <TextBlock Text="• Reparse points/junctions are skipped so cleanup cannot cross into another location."
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,7"/>
+                                    <TextBlock Text="• Installed Windows optional features, indexing, pagefile, hibernation and restore settings are not changed."
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,7"/>
+                                    <TextBlock Text="• Windows Update cleanup runs only when servicing is idle and restores the service state it changed."
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Automatic run summary"
+                                               Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBox x:Name="txtBenchmarkComparison"
+                                             Height="190"
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             IsReadOnly="True"
+                                             VerticalScrollBarVisibility="Auto"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
                 </Grid>
             </TabItem>
 
@@ -134,46 +291,92 @@
                     <StackPanel>
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="Windows-native drive optimisation" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <TextBlock Text="Windows detects the media type and chooses the appropriate optimisation automatically, such as TRIM for supported SSDs or defragmentation for HDDs." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                <TextBlock Text="Windows-native drive optimisation"
+                                           Style="{StaticResource SectionTitleStyle}"/>
+                                <TextBlock Text="Windows detects the media type and chooses the appropriate optimisation automatically, such as TRIM for supported SSDs or defragmentation for HDDs."
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,12"/>
                                 <WrapPanel>
-                                    <Button x:Name="btnOptimizeDrive" Content="Optimize System Drive" Width="180" Click="OptimizeSystemDrive_Click"/>
-                                    <Button Content="Open Startup Apps" Width="150" Click="OpenStartupApps_Click"/>
-                                    <Button Content="Open Storage Settings" Width="170" Click="OpenStorageSettings_Click"/>
+                                    <Button x:Name="btnOptimizeDrive"
+                                            Content="Optimize system drive"
+                                            Width="180"
+                                            Click="OptimizeSystemDrive_Click"/>
+                                    <Button Content="Open startup apps"
+                                            Width="150"
+                                            Click="OpenStartupApps_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Open storage settings"
+                                            Width="175"
+                                            Click="OpenStorageSettings_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}"/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
 
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="Ethernet &amp; Wi-Fi optimisation" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <TextBlock Text="Applies supported high-throughput Windows TCP defaults and reduces power-saving latency on physical network adapters. Private Internet Access virtual adapters, VPN DNS, MTU, routes, bindings and tunnel settings are deliberately left untouched." TextWrapping="Wrap" Margin="0,0,0,8"/>
-                                <TextBlock Text="For PIA users: keep MTU on Auto and use PIA's recommended tunnel driver. To reach local media devices while the VPN is connected, enable Allow LAN Traffic in PIA Settings &gt; Network." TextWrapping="Wrap" Margin="0,0,0,10"/>
-                                <TextBlock x:Name="txtNetworkStatus" Text="Checking network status..." TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                <TextBlock Text="Ethernet &amp; Wi-Fi optimisation"
+                                           Style="{StaticResource SectionTitleStyle}"/>
+                                <TextBlock Text="Applies supported high-throughput Windows TCP defaults and reduces power-saving latency on physical network adapters. Private Internet Access virtual adapters, VPN DNS, MTU, routes, bindings and tunnel settings are deliberately left untouched."
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock Text="For PIA users: keep MTU on Auto and use PIA's recommended tunnel driver. To reach local media devices while the VPN is connected, enable Allow LAN Traffic in PIA Settings &gt; Network."
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,10"/>
+                                <TextBlock x:Name="txtNetworkStatus"
+                                           Text="Checking network status..."
+                                           TextWrapping="Wrap"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,12"/>
                                 <WrapPanel>
-                                    <Button x:Name="btnOptimizeNetwork" Content="Optimize Ethernet &amp; Wi-Fi" Width="190" Click="OptimizeNetwork_Click"/>
-                                    <Button Content="Refresh Network Status" Width="180" Click="RefreshNetwork_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                                    <Button Content="Open PIA" Width="110" Click="OpenPia_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button x:Name="btnOptimizeNetwork"
+                                            Content="Optimize Ethernet &amp; Wi-Fi"
+                                            Width="195"
+                                            Click="OptimizeNetwork_Click"/>
+                                    <Button Content="Refresh network status"
+                                            Width="180"
+                                            Click="RefreshNetwork_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="Open PIA"
+                                            Width="110"
+                                            Click="OpenPia_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}"/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
 
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="LAN media streaming" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <TextBlock Text="Turn this PC into a Windows media streaming device for trusted devices on your private LAN. If legacy Windows Media components are missing, Windows Optimizer can add them after asking you first. It never removes media features." TextWrapping="Wrap" Margin="0,0,0,10"/>
-                                <TextBlock x:Name="txtMediaStreamingStatus" Text="Checking media streaming status..." TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                <TextBlock Text="LAN media streaming"
+                                           Style="{StaticResource SectionTitleStyle}"/>
+                                <TextBlock Text="Turn this PC into a Windows media streaming device for trusted devices on your private LAN. If legacy Windows Media components are missing, Windows Optimizer can add them after asking you first. It never removes media features."
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,10"/>
+                                <TextBlock x:Name="txtMediaStreamingStatus"
+                                           Text="Checking media streaming status..."
+                                           TextWrapping="Wrap"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,12"/>
                                 <WrapPanel>
-                                    <Button x:Name="btnEnableMediaStreaming" Content="Enable LAN Media Streaming" Width="210" Click="EnableMediaStreaming_Click"/>
-                                    <Button x:Name="btnDisableMediaStreaming" Content="Turn Off Media Streaming" Width="190" Click="DisableMediaStreaming_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button x:Name="btnEnableMediaStreaming"
+                                            Content="Enable LAN media streaming"
+                                            Width="210"
+                                            Click="EnableMediaStreaming_Click"/>
+                                    <Button x:Name="btnDisableMediaStreaming"
+                                            Content="Turn off media streaming"
+                                            Width="190"
+                                            Click="DisableMediaStreaming_Click"
+                                            Style="{StaticResource SecondaryButtonStyle}"/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
 
                         <Border Style="{StaticResource CardBorderStyle}">
                             <StackPanel>
-                                <TextBlock Text="Performance policy" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <TextBlock Text="Windows Optimizer deliberately avoids registry-cleaner behaviour, broad service disabling, DNS replacement, MTU guessing and vendor-specific NIC tweaks. Changes that trade stability or VPN compatibility for tiny benchmark gains are not treated as performance improvements." TextWrapping="Wrap"/>
+                                <TextBlock Text="Performance policy"
+                                           Style="{StaticResource SectionTitleStyle}"/>
+                                <TextBlock Text="Windows Optimizer avoids registry-cleaner behaviour, broad service disabling, DNS replacement, MTU guessing and vendor-specific NIC tweaks. Changes that trade stability or VPN compatibility for tiny benchmark gains are not treated as performance improvements."
+                                           TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -183,23 +386,93 @@
             <TabItem Header="Benchmark">
                 <Border Margin="12" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="Performance snapshot" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <TextBlock Text="Performance snapshot"
+                                   Style="{StaticResource SectionTitleStyle}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <Button Content="Take BEFORE snapshot" Width="170" Margin="0,0,10,0" Click="BenchmarkBefore_Click"/>
-                            <Button Content="Take AFTER snapshot" Width="170" Margin="0,0,10,0" Click="BenchmarkAfter_Click"/>
-                            <Button Content="Compare" Width="110" Click="CompareBenchmark_Click"/>
+                            <Button Content="Take BEFORE snapshot"
+                                    Width="175"
+                                    Click="BenchmarkBefore_Click"/>
+                            <Button Content="Take AFTER snapshot"
+                                    Width="175"
+                                    Click="BenchmarkAfter_Click"/>
+                            <Button Content="Compare"
+                                    Width="110"
+                                    Click="CompareBenchmark_Click"/>
                         </StackPanel>
                         <TextBlock Text="Before snapshot:" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtBenchmarkBefore" Height="110" Margin="0,6,0,12" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                        <TextBox x:Name="txtBenchmarkBefore"
+                                 Height="110"
+                                 Margin="0,6,0,12"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 IsReadOnly="True"
+                                 VerticalScrollBarVisibility="Auto"/>
                         <TextBlock Text="After snapshot:" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtBenchmarkAfter" Height="110" Margin="0,6,0,12" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                        <TextBox x:Name="txtBenchmarkAfter"
+                                 Height="110"
+                                 Margin="0,6,0,12"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 IsReadOnly="True"
+                                 VerticalScrollBarVisibility="Auto"/>
                     </StackPanel>
                 </Border>
             </TabItem>
         </TabControl>
 
-        <GroupBox Grid.Row="2" Header="Activity log" Margin="0,10,0,0">
-            <TextBox x:Name="txtLog" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AcceptsReturn="True" IsReadOnly="True"/>
+        <Border Grid.Row="2"
+                Style="{StaticResource CardBorderStyle}"
+                Margin="0,10,0,0"
+                Padding="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="txtProgressStatus"
+                               Text="Ready"
+                               FontSize="14"
+                               FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1"
+                               Text="1LG Digital"
+                               Foreground="{StaticResource BrandBrush}"
+                               FontWeight="Bold"
+                               FontSize="12"/>
+                </Grid>
+
+                <ProgressBar x:Name="operationProgress"
+                             Grid.Row="1"
+                             Height="10"
+                             Minimum="0"
+                             Maximum="1"
+                             Value="0"
+                             Margin="0,8,0,7"/>
+
+                <TextBlock x:Name="txtProgressDetail"
+                           Grid.Row="2"
+                           Text="Waiting for an operation."
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           Opacity="0.74"/>
+            </Grid>
+        </Border>
+
+        <GroupBox Grid.Row="3"
+                  Header="Activity log"
+                  Margin="0,10,0,0">
+            <TextBox x:Name="txtLog"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     AcceptsReturn="True"
+                     IsReadOnly="True"/>
         </GroupBox>
     </Grid>
 </Window>

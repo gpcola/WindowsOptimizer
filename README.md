@@ -14,7 +14,7 @@ Simple mode provides one primary action:
 
 - **Run safe cleanup** — removes only stale top-level temporary files, empties the Recycle Bin, and clears the Windows Update download cache when Windows servicing is idle.
 
-A visible progress panel shows the current step and completion state. Browser profiles, Microsoft Store app data, Windows identity stores and user-defined exclusions are protected from cleanup.
+A visible progress panel shows the current step and completion state. After the run, Simple mode prominently reports the **net disk space reclaimed** and shows C: free space before and after. Browser profiles, Microsoft Store app data, Windows identity stores and user-defined exclusions are protected from cleanup.
 
 Simple mode does **not** uninstall applications, disable services or indexing, alter the pagefile, delete restore points, disable hibernation, change background-app policies, or remove Windows features.
 
@@ -42,7 +42,7 @@ Built-in protected locations include:
 
 Additional folders can be entered in **Advanced > Housekeeping > Your additional exclusions**. They are stored under `%LOCALAPPDATA%\1LG Digital\WindowsOptimizer\cleanup-exclusions.txt`.
 
-Temporary-file cleanup is non-recursive and limited to the expected user and Windows Temp roots. Reparse points/junctions are skipped.
+Temporary-file cleanup is non-recursive and limited to the expected user and Windows Temp roots. Reparse points/junctions are skipped. Post-run reclaimed-space figures are measured from exact C: free-space bytes immediately before and after the workflow; Windows background activity can slightly affect the reported net change.
 
 ## Windows feature safety
 

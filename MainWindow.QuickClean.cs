@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace WindowsOptimizer
 {
@@ -14,6 +15,9 @@ namespace WindowsOptimizer
         private TextBlock quickCleanStatus = null!;
         private TextBlock quickNetworkStatus = null!;
         private TextBlock quickMediaStreamingStatus = null!;
+        private ProgressBar quickProgress = null!;
+        private TextBlock quickProgressStatus = null!;
+        private TextBlock quickProgressDetail = null!;
         private TabControl modeTabs = null!;
 
         public void EnableQuickModeShell()
@@ -25,13 +29,15 @@ namespace WindowsOptimizer
 
             modeTabs = new TabControl
             {
-                Margin = new Thickness(12),
-                SelectedIndex = 0
+                Margin = new Thickness(0),
+                Padding = new Thickness(0),
+                SelectedIndex = 0,
+                Background = SystemColors.WindowBrush
             };
 
             var quickTab = new TabItem
             {
-                Header = "Simple",
+                Header = "Simple clean",
                 Content = BuildQuickCleanContent(),
                 IsSelected = true
             };
@@ -47,158 +53,274 @@ namespace WindowsOptimizer
             modeTabs.SelectionChanged += ModeTabs_SelectionChanged;
 
             Content = modeTabs;
-            Title = "Windows Optimizer by 1LG Digital";
+            Title = "Windows Optimizer — 1LG Digital";
 
-            MinWidth = 700;
+            MinWidth = 760;
             MinHeight = 650;
-            Width = 820;
+            Width = 900;
             Height = 760;
             quickModeInitialized = true;
-            RefreshNetworkStatus();
-            RefreshMediaStreamingStatus();
+
+            SetQuickProgress(
+                0,
+                1,
+                "Ready",
+                "Edge, browser profiles, Microsoft Store app data and your custom exclusions are protected.",
+                false);
         }
 
         private FrameworkElement BuildQuickCleanContent()
         {
             var root = new Grid
             {
-                Margin = new Thickness(24),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch
+                Background = SystemColors.WindowBrush
             };
 
-            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var card = new Border
+            var brandBrush = new LinearGradientBrush(
+                Color.FromRgb(76, 29, 149),
+                Color.FromRgb(37, 99, 235),
+                0);
+
+            var header = new Border
             {
-                MaxWidth = 660,
+                Background = brandBrush,
+                Padding = new Thickness(34, 24, 34, 24)
+            };
+
+            var headerGrid = new Grid();
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var brandStack = new StackPanel();
+
+            brandStack.Children.Add(new TextBlock
+            {
+                Text = "1LG DIGITAL",
+                Foreground = Brushes.White,
+                FontSize = 21,
+                FontWeight = FontWeights.Bold,
+                CharacterSpacing = 80
+            });
+
+            brandStack.Children.Add(new TextBlock
+            {
+                Text = "Windows Optimizer",
+                Foreground = Brushes.White,
+                FontSize = 34,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 4, 0, 4)
+            });
+
+            brandStack.Children.Add(new TextBlock
+            {
+                Text = "Safe Windows housekeeping with visible progress and protected application data.",
+                Foreground = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255)),
+                FontSize = 14
+            });
+
+            headerGrid.Children.Add(brandStack);
+
+            var safeBadge = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(100, 255, 255, 255)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(18),
+                Padding = new Thickness(14, 7, 14, 7),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(safeBadge, 1);
+            safeBadge.Child = new TextBlock
+            {
+                Text = "SAFE MODE",
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.Bold,
+                FontSize = 12
+            };
+            headerGrid.Children.Add(safeBadge);
+
+            header.Child = headerGrid;
+            Grid.SetRow(header, 0);
+            root.Children.Add(header);
+
+            var contentScroll = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+            Grid.SetRow(contentScroll, 1);
+
+            var content = new StackPanel
+            {
+                MaxWidth = 680,
+                Margin = new Thickness(32, 28, 32, 24),
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+
+            var primaryCard = new Border
+            {
                 Padding = new Thickness(28),
                 CornerRadius = new CornerRadius(14),
                 BorderThickness = new Thickness(1),
                 BorderBrush = SystemColors.ActiveBorderBrush,
-                Background = SystemColors.ControlBrush,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
+                Background = SystemColors.ControlBrush
             };
 
             var panel = new StackPanel();
-            card.Child = panel;
+            primaryCard.Child = panel;
 
             panel.Children.Add(new TextBlock
             {
-                Text = "1LG DIGITAL",
-                FontSize = 13,
-                FontWeight = FontWeights.Bold,
-                Foreground = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(91, 33, 182)),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 4)
-            });
-
-            panel.Children.Add(new TextBlock
-            {
-                Text = "Windows Optimizer",
-                FontSize = 28,
+                Text = "Clean up this PC",
+                FontSize = 24,
                 FontWeight = FontWeights.SemiBold,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 10)
+                Margin = new Thickness(0, 0, 0, 8)
             });
 
             panel.Children.Add(new TextBlock
             {
-                Text = "Safe housekeeping and performance maintenance for Windows.",
-                FontSize = 16,
+                Text = "One safe action for routine housekeeping.",
+                FontSize = 15,
+                Opacity = 0.78,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 16)
+                Margin = new Thickness(0, 0, 0, 18)
             });
+
+            var steps = new StackPanel
+            {
+                Margin = new Thickness(18, 0, 18, 18)
+            };
+
+            foreach (string step in new[]
+            {
+                "✓ Remove stale top-level temporary files only",
+                "✓ Empty items already in the Windows Recycle Bin",
+                "✓ Clear the Windows Update download cache only when servicing is idle"
+            })
+            {
+                steps.Children.Add(new TextBlock
+                {
+                    Text = step,
+                    FontSize = 14,
+                    Margin = new Thickness(0, 0, 0, 8)
+                });
+            }
+
+            panel.Children.Add(steps);
 
             quickCleanButton = new Button
             {
-                Content = "Clean up this PC",
-                FontSize = 20,
+                Content = "Run safe cleanup",
+                FontSize = 19,
                 FontWeight = FontWeights.SemiBold,
-                Height = 60,
-                MinWidth = 320,
+                Height = 58,
+                MinWidth = 330,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 8)
+                Margin = new Thickness(0, 0, 0, 14)
             };
             quickCleanButton.Click += QuickClean_Click;
             panel.Children.Add(quickCleanButton);
 
             quickCleanStatus = new TextBlock
             {
-                Text = "Cleans only stale temporary files, the Recycle Bin and an idle Windows Update download cache. No apps or Windows features are removed.",
+                Text = "Application data is never a cleanup target. Use Advanced to review or add protected folders.",
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 MaxWidth = 580,
-                Opacity = 0.8,
-                Margin = new Thickness(0, 0, 0, 18)
+                Opacity = 0.78
             };
             panel.Children.Add(quickCleanStatus);
 
-            quickNetworkButton = new Button
-            {
-                Content = "Optimize Ethernet & Wi-Fi",
-                FontSize = 15,
-                Height = 46,
-                MinWidth = 320,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-            quickNetworkButton.Click += OptimizeNetwork_Click;
-            panel.Children.Add(quickNetworkButton);
+            content.Children.Add(primaryCard);
 
-            quickNetworkStatus = new TextBlock
+            var protectionCard = new Border
             {
-                Text = "Uses supported Windows high-throughput settings on physical adapters only. PIA VPN settings are preserved.",
+                Padding = new Thickness(20),
+                CornerRadius = new CornerRadius(12),
+                BorderThickness = new Thickness(1),
+                BorderBrush = SystemColors.ActiveBorderBrush,
+                Background = SystemColors.ControlBrush,
+                Margin = new Thickness(0, 14, 0, 0)
+            };
+
+            protectionCard.Child = new TextBlock
+            {
+                Text = "Protected by default: Microsoft Edge user data, Chrome/Brave/Firefox profiles, Microsoft Store app data, Windows identity stores and any folders you add in Advanced.",
                 TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 580,
-                Opacity = 0.8,
-                Margin = new Thickness(0, 0, 0, 18)
+                FontSize = 13,
+                Opacity = 0.82
             };
-            panel.Children.Add(quickNetworkStatus);
 
-            quickMediaStreamingButton = new Button
+            content.Children.Add(protectionCard);
+            contentScroll.Content = content;
+            root.Children.Add(contentScroll);
+
+            var progressCard = new Border
             {
-                Content = "Make this PC a LAN media streamer",
-                FontSize = 15,
-                Height = 46,
-                MinWidth = 320,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 8)
+                Background = SystemColors.ControlBrush,
+                BorderBrush = SystemColors.ActiveBorderBrush,
+                BorderThickness = new Thickness(1, 1, 1, 0),
+                Padding = new Thickness(28, 16, 28, 18)
             };
-            quickMediaStreamingButton.Click += EnableMediaStreaming_Click;
-            panel.Children.Add(quickMediaStreamingButton);
 
-            quickMediaStreamingStatus = new TextBlock
+            var progressPanel = new StackPanel
             {
-                Text = "Media streaming is only enabled on a trusted private LAN. If PIA is connected, Allow LAN Traffic should be enabled in PIA.",
-                TextWrapping = TextWrapping.Wrap,
-                TextAlignment = TextAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                MaxWidth = 580,
-                Opacity = 0.8,
-                Margin = new Thickness(0, 0, 0, 18)
+                MaxWidth = 760,
+                HorizontalAlignment = HorizontalAlignment.Center
             };
-            panel.Children.Add(quickMediaStreamingStatus);
 
-            panel.Children.Add(new TextBlock
+            var progressHeader = new Grid();
+            progressHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            progressHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            quickProgressStatus = new TextBlock
             {
-                Text = "A 1LG Digital utility",
-                FontSize = 12,
+                Text = "Ready",
                 FontWeight = FontWeights.SemiBold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Opacity = 0.75
-            });
+                FontSize = 14
+            };
+            progressHeader.Children.Add(quickProgressStatus);
 
-            Grid.SetRow(card, 1);
-            root.Children.Add(card);
+            var byline = new TextBlock
+            {
+                Text = "1LG Digital",
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(91, 33, 182)),
+                FontSize = 12
+            };
+            Grid.SetColumn(byline, 1);
+            progressHeader.Children.Add(byline);
+
+            progressPanel.Children.Add(progressHeader);
+
+            quickProgress = new ProgressBar
+            {
+                Height = 9,
+                Minimum = 0,
+                Maximum = 1,
+                Margin = new Thickness(0, 8, 0, 7)
+            };
+            progressPanel.Children.Add(quickProgress);
+
+            quickProgressDetail = new TextBlock
+            {
+                Text = "Waiting for an operation.",
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 12,
+                Opacity = 0.72
+            };
+            progressPanel.Children.Add(quickProgressDetail);
+
+            progressCard.Child = progressPanel;
+            Grid.SetRow(progressCard, 2);
+            root.Children.Add(progressCard);
+
             return root;
         }
 
@@ -209,17 +331,17 @@ namespace WindowsOptimizer
 
             if (modeTabs.SelectedIndex == 1)
             {
-                MinWidth = 980;
-                MinHeight = 700;
-                if (Width < 1180) Width = 1180;
-                if (Height < 840) Height = 840;
+                MinWidth = 1000;
+                MinHeight = 720;
+                if (Width < 1220) Width = 1220;
+                if (Height < 860) Height = 860;
             }
             else
             {
-                MinWidth = 700;
+                MinWidth = 760;
                 MinHeight = 650;
-                if (Width > 920) Width = 820;
-                if (Height > 800) Height = 760;
+                if (Width > 980) Width = 900;
+                if (Height > 820) Height = 760;
             }
         }
 
@@ -232,7 +354,7 @@ namespace WindowsOptimizer
             }
 
             quickCleanButton.IsEnabled = false;
-            quickCleanStatus.Text = "Cleaning safely. Active or uncertain items will be skipped...";
+            quickCleanStatus.Text = "Cleaning safely. Protected, active or uncertain items will be skipped.";
 
             var actions = new List<(string Name, Func<bool> Execute)>
             {
@@ -243,20 +365,48 @@ namespace WindowsOptimizer
 
             try
             {
-                await RunWorkflowAsync(actions, "Quick clean");
+                await RunWorkflowAsync(actions, "Safe cleanup");
                 quickCleanStatus.Text =
-                    "Finished. No apps, Windows features, services, indexing settings or application data were changed.";
+                    "Finished. Browser profiles, app data, Windows features, indexing settings and unrelated services were not touched.";
             }
             catch (Exception ex)
             {
                 quickCleanStatus.Text =
-                    "Quick clean stopped safely after an error. Open Advanced to review the activity log.";
+                    "Safe cleanup stopped after an error. Open Advanced to review the activity log.";
                 logger.Log("ERR: Quick clean: " + ex.Message);
             }
             finally
             {
                 quickCleanButton.IsEnabled = true;
             }
+        }
+
+        private void SetQuickProgress(
+            int completed,
+            int total,
+            string status,
+            string detail,
+            bool active)
+        {
+            if (!quickModeInitialized || quickProgress == null)
+                return;
+
+            quickProgress.IsIndeterminate = active && total <= 0;
+
+            if (total > 0)
+            {
+                quickProgress.IsIndeterminate = false;
+                quickProgress.Minimum = 0;
+                quickProgress.Maximum = total;
+                quickProgress.Value = Math.Clamp(completed, 0, total);
+            }
+            else if (!active)
+            {
+                quickProgress.Value = 0;
+            }
+
+            quickProgressStatus.Text = status;
+            quickProgressDetail.Text = detail;
         }
 
         private void SetQuickNetworkStatus(string text)

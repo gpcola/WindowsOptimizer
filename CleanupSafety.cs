@@ -115,8 +115,14 @@ namespace WindowsOptimizer
             if (string.IsNullOrWhiteSpace(candidate) || !Directory.Exists(candidate))
                 return false;
 
-            if (IsProtectedPath(candidate) || IsDangerousRoot(candidate))
+            if (IsDangerousRoot(candidate))
                 return false;
+
+            if (GetEffectiveProtectedPaths()
+                .Any(protectedPath => IsSameOrChild(candidate, protectedPath)))
+            {
+                return false;
+            }
 
             string leafName = new DirectoryInfo(candidate).Name;
             if (!leafName.Contains("temp", StringComparison.OrdinalIgnoreCase))

@@ -179,6 +179,12 @@ namespace WindowsOptimizer
                 isBusy = false;
                 SetBusyState(false);
                 SetQuickMediaStreamingButtonEnabled(true);
+                UpdateOperationProgress(
+                    1,
+                    1,
+                    "LAN media streaming operation finished",
+                    txtMediaStreamingStatus.Text,
+                    false);
             }
         }
 
@@ -236,6 +242,12 @@ namespace WindowsOptimizer
                 isBusy = false;
                 SetBusyState(false);
                 SetQuickMediaStreamingButtonEnabled(true);
+                UpdateOperationProgress(
+                    1,
+                    1,
+                    "LAN media streaming operation finished",
+                    txtMediaStreamingStatus.Text,
+                    false);
             }
         }
 
@@ -304,6 +316,16 @@ else {
                 txtMediaStreamingStatus.Text = text;
                 SetQuickMediaStreamingStatus(text);
             });
+
+            if (isBusy)
+            {
+                UpdateOperationProgress(
+                    0,
+                    0,
+                    "LAN media streaming",
+                    text,
+                    true);
+            }
         }
 
         private static PowerShellResult GetNetworkProfileStatus()

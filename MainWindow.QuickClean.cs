@@ -18,6 +18,9 @@ namespace WindowsOptimizer
         private ProgressBar quickProgress = null!;
         private TextBlock quickProgressStatus = null!;
         private TextBlock quickProgressDetail = null!;
+        private Border quickImpactCard = null!;
+        private TextBlock quickImpactTitle = null!;
+        private TextBlock quickImpactDetail = null!;
         private TabControl modeTabs = null!;
 
         public void EnableQuickModeShell()
@@ -236,6 +239,45 @@ namespace WindowsOptimizer
             };
             panel.Children.Add(quickCleanStatus);
 
+            quickImpactCard = new Border
+            {
+                Visibility = Visibility.Collapsed,
+                Padding = new Thickness(18),
+                CornerRadius = new CornerRadius(10),
+                BorderThickness = new Thickness(1),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(37, 99, 235)),
+                Background = new SolidColorBrush(Color.FromArgb(18, 37, 99, 235)),
+                Margin = new Thickness(0, 18, 0, 0)
+            };
+
+            var impactPanel = new StackPanel();
+
+            quickImpactTitle = new TextBlock
+            {
+                Text = "Run complete",
+                FontSize = 23,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            impactPanel.Children.Add(quickImpactTitle);
+
+            quickImpactDetail = new TextBlock
+            {
+                Text = string.Empty,
+                FontSize = 13,
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                MaxWidth = 560,
+                Margin = new Thickness(0, 7, 0, 0),
+                Opacity = 0.8
+            };
+            impactPanel.Children.Add(quickImpactDetail);
+
+            quickImpactCard.Child = impactPanel;
+            panel.Children.Add(quickImpactCard);
+
             content.Children.Add(primaryCard);
 
             var protectionCard = new Border
@@ -353,6 +395,7 @@ namespace WindowsOptimizer
             }
 
             quickCleanButton.IsEnabled = false;
+            ClearQuickRunImpact();
             quickCleanStatus.Text = "Cleaning safely. Protected, active or uncertain items will be skipped.";
 
             var actions = new List<(string Name, Func<bool> Execute)>
@@ -378,6 +421,27 @@ namespace WindowsOptimizer
             {
                 quickCleanButton.IsEnabled = true;
             }
+        }
+
+        private void SetQuickRunImpact(string headline, string detail)
+        {
+            if (!quickModeInitialized || quickImpactCard == null)
+                return;
+
+            Dispatcher.Invoke(() =>
+            {
+                quickImpactTitle.Text = headline;
+                quickImpactDetail.Text = detail;
+                quickImpactCard.Visibility = Visibility.Visible;
+            });
+        }
+
+        private void ClearQuickRunImpact()
+        {
+            if (!quickModeInitialized || quickImpactCard == null)
+                return;
+
+            Dispatcher.Invoke(() => quickImpactCard.Visibility = Visibility.Collapsed);
         }
 
         private void SetQuickProgress(

@@ -8,8 +8,10 @@ namespace WindowsOptimizer
         public sealed class MetricsSnapshot
         {
             public DateTime CapturedAt { get; init; } = DateTime.Now;
-            public double DiskFreeCgb { get; init; }
-            public double DiskTotalCgb { get; init; }
+            public long DiskFreeCBytes { get; init; }
+            public long DiskTotalCBytes { get; init; }
+            public double DiskFreeCgb => DiskFreeCBytes / 1024d / 1024d / 1024d;
+            public double DiskTotalCgb => DiskTotalCBytes / 1024d / 1024d / 1024d;
             public double AvailableMemoryMb { get; init; }
             public double TotalMemoryMbEstimate { get; init; }
             public int LogicalProcessors { get; init; }
@@ -21,8 +23,8 @@ namespace WindowsOptimizer
             return new MetricsSnapshot
             {
                 CapturedAt = DateTime.Now,
-                DiskFreeCgb = DiskHelper.GetFreeSpaceGB("C"),
-                DiskTotalCgb = DiskHelper.GetTotalSpaceGB("C"),
+                DiskFreeCBytes = DiskHelper.GetFreeSpaceBytes("C"),
+                DiskTotalCBytes = DiskHelper.GetTotalSpaceBytes("C"),
                 AvailableMemoryMb = GetAvailableMemoryMb(),
                 TotalMemoryMbEstimate = GetTotalMemoryMbEstimate(),
                 LogicalProcessors = Environment.ProcessorCount,
@@ -59,17 +61,55 @@ namespace WindowsOptimizer
                 after;
         }
 
+        public sealed class RunImpact
+        {
+            public long DiskFreeDeltaBytes { get; init; }
+            public string Headline { get; init; } = string.Empty;
+            public string Detail { get; init; } = string.Empty;
+        }
+
+        public RunImpact BuildRunImpact(MetricsSnapshot before, MetricsSnapshot after)
+        {
+            long freeDeltaBytes = after.DiskFreeCBytes - before.DiskFreeCBytes;
+            const long measurementFloorBytes = 1024L * 1024L;
+
+            string headline;
+            if (freeDeltaBytes >= measurementFloorBytes)
+            {
+                headline = $"Reclaimed {FormatBytes(freeDeltaBytes)}";
+            }
+            else if (freeDeltaBytes <= -measurementFloorBytes)
+            {
+                headline = $"Net free space changed by -{FormatBytes(Math.Abs(freeDeltaBytes))}";
+            }
+            else
+            {
+                headline = "No measurable disk-space change";
+            }
+
+            string signedDelta = freeDeltaBytes switch
+            {
+                >= measurementFloorBytes => $"+{FormatBytes(freeDeltaBytes)}",
+                <= -measurementFloorBytes => $"-{FormatBytes(Math.Abs(freeDeltaBytes))}",
+                _ => "less than 1 MB"
+            };
+
+            string detail =
+                $"C: free space {FormatBytes(before.DiskFreeCBytes)} → {FormatBytes(after.DiskFreeCBytes)} " +
+                $"({signedDelta} net). Measured immediately before and after the run; normal Windows background activity can slightly affect this figure.";
+
+            return new RunImpact
+            {
+                DiskFreeDeltaBytes = freeDeltaBytes,
+                Headline = headline,
+                Detail = detail
+            };
+        }
+
         public string BuildRunSummary(MetricsSnapshot before, MetricsSnapshot after, int appliedActionCount, bool rebootRecommended)
         {
-            double freeDeltaGb = Math.Round(after.DiskFreeCgb - before.DiskFreeCgb, 2);
+            RunImpact impact = BuildRunImpact(before, after);
             double ramDeltaMb = Math.Round(after.AvailableMemoryMb - before.AvailableMemoryMb, 0);
-
-            string freeLine = freeDeltaGb switch
-            {
-                > 0 => $"Disk C free space increased by {freeDeltaGb:N2} GB.",
-                < 0 => $"Disk C free space decreased by {Math.Abs(freeDeltaGb):N2} GB.",
-                _ => "Disk C free space is unchanged."
-            };
 
             string ramLine = ramDeltaMb switch
             {
@@ -81,16 +121,33 @@ namespace WindowsOptimizer
             return
                 "Automatic post-run summary" + Environment.NewLine +
                 "--------------------------" + Environment.NewLine +
+                $"{impact.Headline}{Environment.NewLine}" +
+                $"{impact.Detail}{Environment.NewLine}{Environment.NewLine}" +
                 $"Applied actions: {appliedActionCount}{Environment.NewLine}" +
                 $"Before: {before.CapturedAt:G}{Environment.NewLine}" +
                 $"After:  {after.CapturedAt:G}{Environment.NewLine}{Environment.NewLine}" +
-                freeLine + Environment.NewLine +
                 ramLine + Environment.NewLine +
                 $"Logical processors: {after.LogicalProcessors}{Environment.NewLine}" +
                 $"CPU note: {after.CpuHint}{Environment.NewLine}{Environment.NewLine}" +
                 (rebootRecommended
                     ? "Reboot recommended: yes. Complete the restart before reassessing performance."
                     : "Reboot recommended: no for the completed housekeeping/performance actions. Media component installation reports any restart requirement separately.");
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            double value = Math.Abs((double)bytes);
+
+            if (value >= 1024d * 1024d * 1024d)
+                return $"{value / 1024d / 1024d / 1024d:N2} GB";
+
+            if (value >= 1024d * 1024d)
+                return $"{value / 1024d / 1024d:N0} MB";
+
+            if (value >= 1024d)
+                return $"{value / 1024d:N0} KB";
+
+            return $"{value:N0} bytes";
         }
 
         private string GetCpuUsageHint()

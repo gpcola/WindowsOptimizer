@@ -295,20 +295,25 @@ namespace WindowsOptimizer
                     true);
 
                 var afterMetrics = benchmark.CaptureMetrics();
+                var impact = benchmark.BuildRunImpact(beforeMetrics, afterMetrics);
+
                 txtBenchmarkAfter.Text = benchmark.FormatSnapshot(afterMetrics);
                 txtBenchmarkComparison.Text =
                     benchmark.BuildRunSummary(beforeMetrics, afterMetrics, actions.Count, rebootRecommended: false);
 
+                SetQuickRunImpact(impact.Headline, impact.Detail);
+
                 logger.Log("Automatic post-run metrics captured.");
+                logger.Log($"{impact.Headline}. {impact.Detail}");
                 logger.Log($"{mode} finished.");
 
                 UpdateOperationProgress(
                     actions.Count,
                     actions.Count,
-                    workflowSucceeded ? $"{mode} complete" : $"{mode} complete with warnings",
                     workflowSucceeded
-                        ? "All requested actions completed. Protected application data was excluded."
-                        : "One or more actions were skipped or returned a warning. Protected application data remained excluded.",
+                        ? $"{mode} complete — {impact.Headline}"
+                        : $"{mode} complete with warnings — {impact.Headline}",
+                    impact.Detail,
                     false);
             }
             catch (Exception ex)

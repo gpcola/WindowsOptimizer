@@ -7,16 +7,26 @@ namespace WindowsOptimizer
 {
     public static class DiskHelper
     {
-        public static double GetFreeSpaceGB(string driveLetter)
+        public static long GetFreeSpaceBytes(string driveLetter)
         {
             var drive = new DriveInfo(NormalizeDriveLetter(driveLetter));
-            return Math.Round(drive.AvailableFreeSpace / 1024.0 / 1024.0 / 1024.0, 2);
+            return drive.AvailableFreeSpace;
+        }
+
+        public static long GetTotalSpaceBytes(string driveLetter)
+        {
+            var drive = new DriveInfo(NormalizeDriveLetter(driveLetter));
+            return drive.TotalSize;
+        }
+
+        public static double GetFreeSpaceGB(string driveLetter)
+        {
+            return Math.Round(GetFreeSpaceBytes(driveLetter) / 1024.0 / 1024.0 / 1024.0, 2);
         }
 
         public static double GetTotalSpaceGB(string driveLetter)
         {
-            var drive = new DriveInfo(NormalizeDriveLetter(driveLetter));
-            return Math.Round(drive.TotalSize / 1024.0 / 1024.0 / 1024.0, 2);
+            return Math.Round(GetTotalSpaceBytes(driveLetter) / 1024.0 / 1024.0 / 1024.0, 2);
         }
 
         public static IEnumerable<string> GetFixedDriveLetters()

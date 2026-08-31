@@ -29,6 +29,7 @@ jobs:
             'MainWindow.MediaStreaming.cs',
             'NetworkOptimizer.cs',
             'Optimizer.cs',
+            'CleanupSafety.cs',
             'PowerShellHelper.cs'
           )
           $forbidden = @(
@@ -45,6 +46,30 @@ jobs:
             }
           }
           Write-Host 'Safety invariant passed: no Windows feature-removal commands in shipped application code.'
+
+      - name: Safety gate - protect application profiles
+        shell: pwsh
+        run: |
+          $requiredProtections = @(
+            '%LOCALAPPDATA%\\Microsoft\\Edge\\User Data',
+            '%LOCALAPPDATA%\\Packages',
+            '%APPDATA%\\Microsoft\\Protect'
+          )
+          foreach ($pattern in $requiredProtections) {
+            if (-not (Select-String -Path 'CleanupSafety.cs' -Pattern $pattern -SimpleMatch -Quiet)) {
+              throw "Cleanup safety invariant violated: missing protected path '$pattern'."
+            }
+          }
+
+          if (-not (Select-String -Path 'Optimizer.cs' -Pattern 'SearchOption.TopDirectoryOnly' -SimpleMatch -Quiet)) {
+            throw 'Cleanup safety invariant violated: temporary-file cleanup must remain top-level only.'
+          }
+
+          if (-not (Select-String -Path 'Optimizer.cs' -Pattern 'cleanupSafety.ShouldSkip' -SimpleMatch -Quiet)) {
+            throw 'Cleanup safety invariant violated: cleanup candidates must pass the exclusion guard.'
+          }
+
+          Write-Host 'Cleanup safety invariant passed: browser/app profiles are protected and temp cleanup remains non-recursive.'
 
       - name: Safety gate - preserve VPN and adapter compatibility
         shell: pwsh

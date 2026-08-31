@@ -10,11 +10,11 @@ Windows Optimizer opens in **Simple** mode by default.
 
 ### Simple
 
-Simple mode provides three clear actions:
+Simple mode provides one primary action:
 
-- **Clean up this PC** — stale unlocked temporary files, Recycle Bin and the Windows Update download cache when Windows servicing is idle
-- **Optimize Ethernet & Wi-Fi** — applies conservative Windows high-throughput settings to physical Ethernet/Wi-Fi adapters only
-- **Make this PC a LAN media streamer** — configures built-in Windows media sharing for a trusted private LAN
+- **Run safe cleanup** — removes only stale top-level temporary files, empties the Recycle Bin, and clears the Windows Update download cache when Windows servicing is idle.
+
+A visible progress panel shows the current step and completion state. Browser profiles, Microsoft Store app data, Windows identity stores and user-defined exclusions are protected from cleanup.
 
 Simple mode does **not** uninstall applications, disable services or indexing, alter the pagefile, delete restore points, disable hibernation, change background-app policies, or remove Windows features.
 
@@ -22,11 +22,27 @@ Simple mode does **not** uninstall applications, disable services or indexing, a
 
 Advanced mode contains only Windows maintenance/performance areas:
 
-- **Housekeeping** — safe cleanup plus an explicitly confirmed optional consumer-app removal action
+- **Housekeeping** — safe cleanup, built-in protected folders, persistent custom exclusions, and an explicitly confirmed optional consumer-app removal action
 - **Performance** — Windows-native system-drive optimisation, Ethernet/Wi-Fi optimisation, Private Internet Access guidance, Startup Apps/Storage Settings shortcuts, and LAN media streaming controls
 - **Benchmark** — before/after disk and memory snapshots
 
 WSL, Visual Studio, OneDrive, user-folder relocation, large-file candidate management and similar non-performance modules are not compiled into the shipped application.
+
+## Cleanup protection
+
+Cleanup is deliberately constrained so application profiles cannot become generic cleanup targets.
+
+Built-in protected locations include:
+
+- Microsoft Edge user data
+- Chrome, Brave and Firefox profiles
+- Microsoft Store application data
+- Microsoft OneAuth / IdentityCache
+- Windows credential and DPAPI stores
+
+Additional folders can be entered in **Advanced > Housekeeping > Your additional exclusions**. They are stored under `%LOCALAPPDATA%\1LG Digital\WindowsOptimizer\cleanup-exclusions.txt`.
+
+Temporary-file cleanup is non-recursive and limited to the expected user and Windows Temp roots. Reparse points/junctions are skipped.
 
 ## Windows feature safety
 
@@ -139,6 +155,8 @@ The installer places Windows Optimizer under the **1LG Digital** program folder 
 `.github/workflows/windows-build.yml` validates:
 
 - the no-Windows-feature-removal safety invariant
+- browser/application-profile cleanup protections
+- non-recursive temporary-file cleanup
 - .NET restore/build
 - self-contained Windows publish
 - compiled executable presence

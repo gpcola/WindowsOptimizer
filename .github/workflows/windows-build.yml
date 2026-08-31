@@ -51,9 +51,9 @@ jobs:
         shell: pwsh
         run: |
           $requiredProtections = @(
-            '%LOCALAPPDATA%\\Microsoft\\Edge\\User Data',
-            '%LOCALAPPDATA%\\Packages',
-            '%APPDATA%\\Microsoft\\Protect'
+            '%LOCALAPPDATA%\Microsoft\Edge\User Data',
+            '%LOCALAPPDATA%\Packages',
+            '%APPDATA%\Microsoft\Protect'
           )
           foreach ($pattern in $requiredProtections) {
             if (-not (Select-String -Path 'CleanupSafety.cs' -Pattern $pattern -SimpleMatch -Quiet)) {

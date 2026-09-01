@@ -1,5 +1,20 @@
 # Windows Optimizer
 
+## Current release — 1.3.1
+
+The current validated release is **Windows Optimizer 1.3.1**.
+
+Latest changes include:
+
+- explicit protection for Microsoft Edge and other browser/application profile data;
+- persistent custom cleanup exclusions;
+- non-recursive, safety-guarded temporary-file cleanup;
+- visible per-step progress and clearer operation status;
+- stronger 1LG Digital branding and a simplified default interface;
+- prominent post-run reporting of the net disk space reclaimed, including C: free space before and after.
+
+The Windows build, cleanup safety gates, self-contained publish and installer workflow were revalidated on **1 September 2026**.
+
 **Windows Optimizer** is a Windows 10/11 housekeeping and performance utility from **1LG Digital**.
 
 The application deliberately favours safe, understandable maintenance over aggressive "tweaks". It does not contain a registry cleaner and shipped application code is prohibited by CI from disabling or removing installed Windows optional features.
